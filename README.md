@@ -2,7 +2,7 @@
 
 ## 📖 Sobre o Projeto
 
-"Aline no País das Artes" é um jogo desenvolvido por um grupo de quatro pessoas, com o objetivo de entreter, divertir e ensinar sobre artes ao jogador. O jogador assume o papel de uma menina que está estudando para um exame de graduação em artes. Durante seus estudos, ela acaba cochilando e, como em "Alice no País das Maravilhas", desperta em um mundo mágico repleto de desafios artísticos.
+"Aline no País das Artes" é um jogo desenvolvido por um grupo de quatro pessoas, com o objetivo de entreter, divertir e ensinar sobre artes ao jogador. O jogador assume o papel de uma menina que está estudando para um exame de graduação em artes. Durante seus estudos, ela acaba cochilando e, como em "Alice no País das Maravilhas", desperta em um mundo mágico repleto de desafios artísticos. O projeto é um jogo 2D utilizando linguagem C e a biblioteca Allegro
 
 ## 📜 Enredo
 
