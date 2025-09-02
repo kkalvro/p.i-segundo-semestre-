@@ -10,7 +10,7 @@ Ao acordar nesse universo alternativo, Aline encontra um mundo onde a arte está
 
 A batalha final é contra um antagonista que acredita que o conhecimento artístico deve ser restrito às elites, pois considera que a arte não merece ser acessível a todos.
 
-** 🫵 E você, está pronto para essa aventura?** 
+### 🫵 E você, está pronto para essa aventura? ###
 Ajude Aline a resolver todos os puzzles artísticos e provar que a arte pertence a todos. 
 Que tal embarcar nesta jornada educativa e descobrir o quanto você realmente sabe sobre arte? 
 
