@@ -1,6 +1,7 @@
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_native_dialog.h>
 #include <allegro5/allegro_image.h>
+#include <stdio.h>
 
 int main() {
     if (!al_init()) {
@@ -9,7 +10,7 @@ int main() {
     }
 
     ALLEGRO_DISPLAY *janela;
-    janela = al_create_display(1920, 1080);
+    janela = al_create_display(1280, 720);
     al_set_window_title(janela, "Aline no País das Artes");
     if (!janela) {
         printf("Erro na criacao da janela");
@@ -19,7 +20,7 @@ int main() {
     al_clear_to_color(al_map_rgb(200, 230, 130));
     al_flip_display();
 
-    al_rest(2.0);
+    al_rest(5.0);
     al_destroy_display(janela);
     return 0;
 }
