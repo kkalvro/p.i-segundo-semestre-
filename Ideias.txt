@@ -1,0 +1,4 @@
+Ideias de fases:
+
+- Fases com pintura estilo paint
+- achar chaves para abrir a porta
