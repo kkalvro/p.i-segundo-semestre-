@@ -1,4 +1,4 @@
-// Quebra-cabeça Allegro C - Corrigido 100% (debug error resolvido)
+// Quebra-cabeça
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
