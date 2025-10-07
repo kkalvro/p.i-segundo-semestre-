@@ -105,7 +105,7 @@ int main(void) {
 
     ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();
     ALLEGRO_TIMER* timer = al_create_timer(1.0 / FPS);
-    ALLEGRO_FONT* font = al_load_ttf_font("assets/arial.ttf", 20, 0);
+    ALLEGRO_FONT* font = al_create_builtin_font();
     if (!font) font = al_create_builtin_font();
 
     al_register_event_source(queue, al_get_display_event_source(display));
