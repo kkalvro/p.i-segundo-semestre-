@@ -17,15 +17,15 @@
 
 typedef struct {
     ALLEGRO_BITMAP* bmp;
-    float x, y;              // posição atual (em tela)
-    float target_x, target_y;// posição alvo (grade)
+    float x, y;                 // posição atual (em tela)
+    float target_x, target_y;   // posição alvo (grade)
     int placed;
-    int w, h;                // largura/altura originais da peça
+    int w, h;                   // largura/altura originais da peça
 } Piece;
 
 typedef struct {
     const char* filename;
-    int time_limit_sec; 
+    int time_limit_sec;
 } PhaseDef;
 
 static void shuffle_positions_outside(Piece* pieces, int total, int piece_w_s, int grid_x, int grid_y, int grid_total_h) {
@@ -65,11 +65,24 @@ int main(void) {
     al_register_event_source(queue, al_get_timer_event_source(timer));
     al_start_timer(timer);
 
-    // Definição das fases (imagem e tempo em segundos)
+    // --- CARREGA AS IMAGENS NOVAS ---
+    ALLEGRO_BITMAP* instrucoes_img = al_load_bitmap("assets/instrucoes.jpg");
+    ALLEGRO_BITMAP* fundo = al_load_bitmap("assets/fundo.jpg");
+
+    if (!instrucoes_img) {
+        al_show_native_message_box(display, "Erro", "Não foi possível carregar assets/instrucoes.jpg", NULL, NULL, 0);
+        return -1;
+    }
+    if (!fundo) {
+        al_show_native_message_box(display, "Erro", "Não foi possível carregar assets/fundo.jpg", NULL, NULL, 0);
+        return -1;
+    }
+
+    // Definição das fases
     PhaseDef phases[3] = {
-        { "assets/exemplo_arte_1.jpg", 120 }, // fase 1 = 2:00
-        { "assets/exemplo_arte_2.jpg", 90  }, // fase 2 = 1:30
-        { "assets/exemplo_arte_3.jpg", 60  }  // fase 3 = 1:00
+        { "assets/exemplo_arte_1.jpg", 120 },
+        { "assets/exemplo_arte_2.jpg", 90  },
+        { "assets/exemplo_arte_3.jpg", 60  }
     };
 
     // TELA INICIAL — começa quando usuário aperta ENTER ou dá um clique no mouse
@@ -96,12 +109,10 @@ int main(void) {
         }
 
         if (ev.type == ALLEGRO_EVENT_TIMER) {
-            al_clear_to_color(al_map_rgb(18, 18, 18));
-            al_draw_text(font, al_map_rgb(255, 255, 255), SCREEN_W / 2, 80, ALLEGRO_ALIGN_CENTRE, "Bem-vindo ao quebra-cabeça!");
-            al_draw_text(font, al_map_rgb(200, 200, 200), SCREEN_W / 2, 130, ALLEGRO_ALIGN_CENTRE, "Seu objetivo é montar 3 artes, uma por fase, no menor tempo possível.");
-            al_draw_text(font, al_map_rgb(200, 200, 200), SCREEN_W / 2, 170, ALLEGRO_ALIGN_CENTRE, "Se não montar a tempo numa fase, você recomeça essa mesma fase.");
-            al_draw_text(font, al_map_rgb(200, 200, 200), SCREEN_W / 2, 210, ALLEGRO_ALIGN_CENTRE, "As imagens de referência aparecem à direita.");
-            al_draw_text(font, al_map_rgb(255, 215, 0), SCREEN_W / 2, 300, ALLEGRO_ALIGN_CENTRE, "Pressione ENTER ou clique com o botão esquerdo do mouse para começar");
+            al_clear_to_color(al_map_rgb(0, 0, 0));
+            al_draw_scaled_bitmap(instrucoes_img, 0, 0,
+                al_get_bitmap_width(instrucoes_img), al_get_bitmap_height(instrucoes_img),
+                0, 0, SCREEN_W, SCREEN_H, 0);
             al_flip_display();
         }
     }
@@ -109,14 +120,14 @@ int main(void) {
     al_clear_to_color(al_map_rgb(12, 12, 12));
     al_draw_text(font, al_map_rgb(255, 215, 0), SCREEN_W / 2, SCREEN_H / 2 - 10, ALLEGRO_ALIGN_CENTRE, "Fase 1 começando automaticamente...");
     al_flip_display();
-    al_rest(1.5); 
+    al_rest(1.5);
 
     // loop pelas fases se o usuário não conseguir completar a fase
     for (int phase_idx = 0; phase_idx < 3; ++phase_idx) {
         bool retry_phase = true;
 
         while (retry_phase) {
-            retry_phase = false; 
+            retry_phase = false;
 
             const char* image_path = phases[phase_idx].filename;
             int TIME_LIMIT = phases[phase_idx].time_limit_sec;
@@ -126,13 +137,10 @@ int main(void) {
                 char err[256];
                 sprintf_s(err, sizeof(err), "Falha ao carregar: %s", image_path);
                 al_show_native_message_box(display, "Erro", err, NULL, NULL, 0);
-                al_destroy_display(display);
-                al_destroy_timer(timer);
-                al_destroy_event_queue(queue);
                 return -1;
             }
 
-            // foto dereferência
+            // foto de referência
             const int ref_width = 320;
             int src_w = al_get_bitmap_width(source);
             int src_h = al_get_bitmap_height(source);
@@ -140,10 +148,8 @@ int main(void) {
             int ref_height = (int)(src_h * ref_scale + 0.5f);
 
             // grid 5x5
-            const int rows = 5;
-            const int cols = 5;
+            const int rows = 5, cols = 5;
             const int total = rows * cols;
-
             int piece_w = src_w / cols;
             int piece_h = src_h / rows;
 
@@ -171,8 +177,6 @@ int main(void) {
             Piece* pieces = (Piece*)malloc(sizeof(Piece) * total);
             if (!pieces) {
                 al_show_native_message_box(display, "Erro", "Memória insuficiente", NULL, NULL, 0);
-                al_destroy_bitmap(source);
-                al_destroy_display(display);
                 return -1;
             }
 
@@ -180,14 +184,6 @@ int main(void) {
             for (int r = 0; r < rows; r++) {
                 for (int c = 0; c < cols; c++) {
                     ALLEGRO_BITMAP* sub = al_create_sub_bitmap(source, c * piece_w, r * piece_h, piece_w, piece_h);
-                    if (!sub) {
-                        for (int j = 0; j < idx; j++) if (pieces[j].bmp) al_destroy_bitmap(pieces[j].bmp);
-                        free(pieces);
-                        al_destroy_bitmap(source);
-                        al_show_native_message_box(display, "Erro", "Falha ao criar sub-bitmaps", NULL, NULL, 0);
-                        al_destroy_display(display);
-                        return -1;
-                    }
                     pieces[idx].bmp = sub;
                     pieces[idx].w = piece_w;
                     pieces[idx].h = piece_h;
@@ -202,37 +198,26 @@ int main(void) {
             srand((unsigned)time(NULL) + phase_idx * 11);
             shuffle_positions_outside(pieces, total, piece_w_s, grid_x, grid_y, grid_total_h);
 
-            // variáveis de fase
+            // variáveis da fase
             int grabbed = -1;
             float grab_off_x = 0.0f, grab_off_y = 0.0f;
-            int snap_mode = 1; 
             int victory_flag = 0; // 0 = jogando, 1 = venceu, 2 = timeout
             float elapsed_time = 0.0f;
-
-            // loop da fase (repete até montar)
             bool phase_running = true;
+
+            // loop da fase (código principal, repete até o usuári conseguir montar)
             while (phase_running) {
                 ALLEGRO_EVENT ev;
                 al_wait_for_event(queue, &ev);
 
-                if (ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
-                    for (int i = 0; i < total; i++) if (pieces[i].bmp) al_destroy_bitmap(pieces[i].bmp);
-                    free(pieces);
-                    al_destroy_bitmap(source);
-                    al_destroy_display(display);
-                    al_destroy_timer(timer);
-                    al_destroy_event_queue(queue);
-                    return 0;
-                }
+                if (ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE) return 0;
 
                 else if (ev.type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN && !victory_flag) {
                     float mx = ev.mouse.x, my = ev.mouse.y;
-
                     for (int i = total - 1; i >= 0; i--) {
                         if (pieces[i].placed) continue;
                         if (mx >= pieces[i].x && mx <= pieces[i].x + piece_w_s &&
                             my >= pieces[i].y && my <= pieces[i].y + piece_h_s) {
-
                             Piece tmp = pieces[i];
                             for (int j = i; j < total - 1; j++) pieces[j] = pieces[j + 1];
                             pieces[total - 1] = tmp;
@@ -243,22 +228,15 @@ int main(void) {
                         }
                     }
                 }
-
                 else if (ev.type == ALLEGRO_EVENT_MOUSE_AXES && grabbed >= 0 && !victory_flag) {
                     pieces[grabbed].x = ev.mouse.x - grab_off_x;
                     pieces[grabbed].y = ev.mouse.y - grab_off_y;
                 }
-
                 else if (ev.type == ALLEGRO_EVENT_MOUSE_BUTTON_UP && grabbed >= 0 && !victory_flag) {
-                    float mx = ev.mouse.x, my = ev.mouse.y;
-                    pieces[grabbed].x = mx - grab_off_x;
-                    pieces[grabbed].y = my - grab_off_y;
-
                     float dx = pieces[grabbed].x - pieces[grabbed].target_x;
                     float dy = pieces[grabbed].y - pieces[grabbed].target_y;
                     float dist = sqrtf(dx * dx + dy * dy);
-                    float snap_dist = (snap_mode == 1) ? SNAP_DIST_NORMAL : SNAP_DIST_FINAL;
-                    if (dist <= snap_dist) {
+                    if (dist <= 36.0f) {
                         pieces[grabbed].placed = 1;
                         pieces[grabbed].x = pieces[grabbed].target_x;
                         pieces[grabbed].y = pieces[grabbed].target_y;
@@ -269,119 +247,107 @@ int main(void) {
                 else if (ev.type == ALLEGRO_EVENT_TIMER) {
                     if (!victory_flag) {
                         elapsed_time += 1.0f / FPS;
-                        if (elapsed_time >= TIME_LIMIT) {
-                            victory_flag = 2; 
-                        }
+                        if (elapsed_time >= TIME_LIMIT) victory_flag = 2;
                     }
 
-                    al_clear_to_color(al_map_rgb(20, 20, 20));
+                    // desenha fundo
+                    al_draw_scaled_bitmap(fundo, 0, 0,
+                        al_get_bitmap_width(fundo), al_get_bitmap_height(fundo),
+                        0, 0, SCREEN_W, SCREEN_H, 0);
 
-                    for (int i = 0; i < total; i++) {
+                    // desenha grid e peças
+                    for (int i = 0; i < total; i++)
                         al_draw_rectangle(pieces[i].target_x - 1, pieces[i].target_y - 1,
                             pieces[i].target_x + piece_w_s + 1, pieces[i].target_y + piece_h_s + 1,
                             al_map_rgb(90, 90, 90), 1);
-                    }
 
-                    for (int i = 0; i < total; i++) {
-                        if (pieces[i].placed) {
+                    for (int i = 0; i < total; i++)
+                        if (pieces[i].placed)
                             al_draw_scaled_bitmap(pieces[i].bmp, 0, 0, pieces[i].w, pieces[i].h,
                                 pieces[i].target_x, pieces[i].target_y, piece_w_s, piece_h_s, 0);
-                        }
-                    }
 
-                    for (int i = 0; i < total; i++) {
-                        if (!pieces[i].placed && i != grabbed) {
+                    for (int i = 0; i < total; i++)
+                        if (!pieces[i].placed && i != grabbed)
                             al_draw_scaled_bitmap(pieces[i].bmp, 0, 0, pieces[i].w, pieces[i].h,
                                 pieces[i].x, pieces[i].y, piece_w_s, piece_h_s, 0);
-                        }
-                    }
 
-                    if (grabbed >= 0) {
+                    if (grabbed >= 0)
                         al_draw_scaled_bitmap(pieces[grabbed].bmp, 0, 0, pieces[grabbed].w, pieces[grabbed].h,
                             pieces[grabbed].x, pieces[grabbed].y, piece_w_s, piece_h_s, 0);
-                        al_draw_rectangle(pieces[grabbed].x - 1, pieces[grabbed].y - 1,
-                            pieces[grabbed].x + piece_w_s + 1, pieces[grabbed].y + piece_h_s + 1,
-                            al_map_rgb(255, 215, 0), 2);
-                    }
 
                     // desenha referência à direita 
                     float ref_x = (float)(grid_x + grid_total_w + 20);
                     float ref_y = (float)grid_y;
                     al_draw_scaled_bitmap(source, 0, 0, src_w, src_h, (int)ref_x, (int)ref_y, ref_width, ref_height, 0);
-                    al_draw_rectangle(ref_x - 1, ref_y - 1, ref_x + ref_width + 1, ref_y + ref_height + 1, al_map_rgb(180, 180, 180), 2);
 
                     // timer
                     char timer_text[64];
                     int remaining = (int)ceilf(TIME_LIMIT - elapsed_time);
                     if (remaining < 0) remaining = 0;
-                    sprintf_s(timer_text, sizeof(timer_text), "Tempo restante: %02d:%02d", remaining / 60, remaining % 60);
-                    al_draw_text(font, al_map_rgb(240, 240, 240), SCREEN_W - 340, 8, 0, timer_text);
-
-                    al_draw_text(font, al_map_rgb(200, 200, 200), 12, 8, 0, "Use o mouse para arrastar as peças.");
+                    sprintf_s(timer_text, sizeof(timer_text), "Tempo: %02d:%02d", remaining / 60, remaining % 60);
+                    al_draw_text(font, al_map_rgb(255, 255, 255), SCREEN_W - 300, 8, 0, timer_text);
 
                     // verifica vitória
                     if (!victory_flag) {
                         int all_placed = 1;
-                        for (int i = 0; i < total; i++) if (!pieces[i].placed) { all_placed = 0; break; }
+                        for (int i = 0; i < total; i++)
+                            if (!pieces[i].placed) { all_placed = 0; break; }
                         if (all_placed) victory_flag = 1;
                     }
 
-                    // mensagens de fim de fase 
+                    // mensagens de fim de fase
                     if (victory_flag == 1) {
-                        al_draw_filled_rectangle(SCREEN_W / 2 - 300, SCREEN_H / 2 - 40, SCREEN_W / 2 + 300, SCREEN_H / 2 + 40, al_map_rgba(0, 0, 0, 200));
+                        al_draw_filled_rectangle(SCREEN_W / 2 - 300, SCREEN_H / 2 - 40, SCREEN_W / 2 + 300, SCREEN_H / 2 + 40, al_map_rgba(0, 0, 0, 180));
                         al_draw_text(font, al_map_rgb(0, 255, 0), SCREEN_W / 2, SCREEN_H / 2 - 6, ALLEGRO_ALIGN_CENTRE, "Fase concluída!");
                         al_flip_display();
                         al_rest(2.0);
                         phase_running = false; // segue para a próxima fase
                     }
                     else if (victory_flag == 2) {
-                        al_draw_filled_rectangle(SCREEN_W / 2 - 360, SCREEN_H / 2 - 60, SCREEN_W / 2 + 360, SCREEN_H / 2 + 60, al_map_rgba(0, 0, 0, 200));
-                        al_draw_text(font, al_map_rgb(255, 50, 50), SCREEN_W / 2, SCREEN_H / 2 - 10, ALLEGRO_ALIGN_CENTRE, "Você não conseguiu montar a tempo!");
-                        al_draw_text(font, al_map_rgb(255, 255, 255), SCREEN_W / 2, SCREEN_H / 2 + 18, ALLEGRO_ALIGN_CENTRE, "Reiniciando esta mesma fase...");
+                        al_draw_filled_rectangle(SCREEN_W / 2 - 360, SCREEN_H / 2 - 60, SCREEN_W / 2 + 360, SCREEN_H / 2 + 60, al_map_rgba(0, 0, 0, 180));
+                        al_draw_text(font, al_map_rgb(255, 50, 50), SCREEN_W / 2, SCREEN_H / 2 - 10, ALLEGRO_ALIGN_CENTRE, "Tempo esgotado! Reiniciando fase...");
                         al_flip_display();
                         al_rest(2.0);
                         // limpa e sinaliza tentar novamente
-                        for (int i = 0; i < total; i++) if (pieces[i].bmp) al_destroy_bitmap(pieces[i].bmp);
-                        free(pieces);
-                        al_destroy_bitmap(source);
                         retry_phase = true;
                         phase_running = false;
                     }
 
                     al_flip_display();
-                } 
-            } 
-
-            // se não foi feito retry(ou seja, venceu), faz a limpeza normalmente
-            if (!retry_phase) {
-                for (int i = 0; i < total; i++) if (pieces[i].bmp) al_destroy_bitmap(pieces[i].bmp);
-                free(pieces);
-                al_destroy_bitmap(source);
+                }
             }
-        } 
+
+            for (int i = 0; i < total; i++) if (pieces[i].bmp) al_destroy_bitmap(pieces[i].bmp);
+            free(pieces);
+            al_destroy_bitmap(source);
+        }
 
         if (phase_idx <= 1) {
             // mostra texto de transição por 1.5s
             al_clear_to_color(al_map_rgb(12, 12, 12));
-            char tx[128]; sprintf_s(tx, sizeof(tx), "Preparando a fase %d...", phase_idx + 2);
+            char tx[128]; sprintf_s(tx, sizeof(tx), "Preparando fase %d...", phase_idx + 2);
             al_draw_text(font, al_map_rgb(255, 215, 0), SCREEN_W / 2, SCREEN_H / 2, ALLEGRO_ALIGN_CENTRE, tx);
             al_flip_display();
             al_rest(1.5);
         }
-    } 
-
-            al_clear_to_color(al_map_rgb(10, 10, 10));
-            al_draw_text(font, al_map_rgb(255, 255, 255), SCREEN_W / 2, SCREEN_H / 2 - 12, ALLEGRO_ALIGN_CENTRE, "Todas as fases concluídas! Parabéns!");
+        else {
+            al_clear_to_color(al_map_rgb(12, 12, 12));
+            al_draw_text(font, al_map_rgb(255, 255, 255), SCREEN_W / 2, SCREEN_H / 2, ALLEGRO_ALIGN_CENTRE, "Parabéns! Você concluiu todas as fases!");
             al_flip_display();
+            al_rest(3.0);
+        }
+    }
 
     bool waiting_close = true;
     while (waiting_close) {
         ALLEGRO_EVENT ev;
         al_wait_for_event(queue, &ev);
-        if (ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE) waiting_close = false;
-        if (ev.type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN) waiting_close = false;
+        if (ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE || ev.type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN)
+            waiting_close = false;
     }
 
+    al_destroy_bitmap(instrucoes_img);
+    al_destroy_bitmap(fundo);
     al_destroy_font(font);
     al_destroy_timer(timer);
     al_destroy_event_queue(queue);
