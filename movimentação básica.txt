@@ -1,0 +1,5 @@
+Movimentação básica:
+
+- andar para direita 
+- andar para esquerda
+- pular
