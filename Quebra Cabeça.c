@@ -67,9 +67,9 @@ int main(void) {
 
     // Definição das fases (imagem e tempo em segundos)
     PhaseDef phases[3] = {
-        { "assets/exemplo_arte_1.jpg", 300 }, // fase 1 = 2:00
-        { "assets/exemplo_arte_2.jpg", 300  }, // fase 2 = 1:30
-        { "assets/exemplo_arte_3.jpg", 300  }  // fase 3 = 1:00
+        { "assets/exemplo_arte_1.jpg", 120 }, // fase 1 = 2:00
+        { "assets/exemplo_arte_2.jpg", 90  }, // fase 2 = 1:30
+        { "assets/exemplo_arte_3.jpg", 60  }  // fase 3 = 1:00
     };
 
     // TELA INICIAL — começa quando usuário aperta ENTER ou dá um clique no mouse
@@ -329,7 +329,7 @@ int main(void) {
                     // mensagens de fim de fase 
                     if (victory_flag == 1) {
                         al_draw_filled_rectangle(SCREEN_W / 2 - 300, SCREEN_H / 2 - 40, SCREEN_W / 2 + 300, SCREEN_H / 2 + 40, al_map_rgba(0, 0, 0, 200));
-                        al_draw_text(font, al_map_rgb(0, 255, 0), SCREEN_W / 2, SCREEN_H / 2 - 6, ALLEGRO_ALIGN_CENTRE, "Fase concluída! Próxima fase em instantes...");
+                        al_draw_text(font, al_map_rgb(0, 255, 0), SCREEN_W / 2, SCREEN_H / 2 - 6, ALLEGRO_ALIGN_CENTRE, "Fase concluída!");
                         al_flip_display();
                         al_rest(2.0);
                         phase_running = false; // segue para a próxima fase
@@ -360,7 +360,7 @@ int main(void) {
             }
         } 
 
-        if (phase_idx < 3) {
+        if (phase_idx <= 1) {
             // mostra texto de transição por 1.5s
             al_clear_to_color(al_map_rgb(12, 12, 12));
             char tx[128]; sprintf_s(tx, sizeof(tx), "Preparando a fase %d...", phase_idx + 2);
