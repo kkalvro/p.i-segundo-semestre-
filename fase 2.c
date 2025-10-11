@@ -65,7 +65,6 @@ int main() {
 
     srand(time(NULL));
 
-    // Carregar imagem de fundo
     ALLEGRO_BITMAP* background = al_load_bitmap("assets/background.jpg");
     if (!background) {
         fprintf(stderr, "Erro ao carregar imagem de fundo\n");
