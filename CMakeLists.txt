@@ -1,9 +1,11 @@
 cmake_minimum_required(VERSION 3.10)
-
-project(p.i-segundo-semestre- C)
+project(projeto_jogo C)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
+
+# Configurar caminhos para Homebrew (macOS)
+set(CMAKE_PREFIX_PATH "/opt/homebrew" "/usr/local")
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(ALLEGRO REQUIRED
@@ -17,9 +19,13 @@ pkg_check_modules(ALLEGRO REQUIRED
     allegro_acodec-5
 )
 
-add_executable(al_demo main.c
-)
+add_executable(projeto_jogo main.c)
 
-target_include_directories(al_demo PRIVATE ${ALLEGRO_INCLUDE_DIRS})
-target_link_directories(al_demo PRIVATE ${ALLEGRO_LIBRARY_DIRS})
-target_link_libraries(al_demo ${ALLEGRO_LIBRARIES})
+# Configurações de include, link e flags
+target_include_directories(projeto_jogo PRIVATE ${ALLEGRO_INCLUDE_DIRS})
+target_link_directories(projeto_jogo PRIVATE ${ALLEGRO_LIBRARY_DIRS})
+target_link_libraries(projeto_jogo ${ALLEGRO_LIBRARIES})
+target_compile_options(projeto_jogo PRIVATE ${ALLEGRO_CFLAGS_OTHER})
+
+# IMPORTANTE: Copiar pasta assets para o diretório de build
+file(COPY ${CMAKE_SOURCE_DIR}/assets DESTINATION ${CMAKE_BINARY_DIR})
