@@ -148,7 +148,7 @@ void finalizar() {
     if (background_image) {
         al_destroy_bitmap(background_image);
     }
-    if (platform_block_image) { // USAR O IF PARA NÂO CRASHAR DENOVO O JOGO SE O PONTEIRO FOR NULLO
+    if (platform_block_image) {
         al_destroy_bitmap(platform_block_image);
     }
 }
@@ -284,7 +284,7 @@ void atualizar_fisica_entidade(float *x, float *y, float *vel_y, int largura, in
     if (!*no_chao) *vel_y += GRAVIDADE;
     *y += *vel_y;
 
-    float chao_y_pos = ALTURA_TELA - 50; // Posição Y do "chão" base
+    float chao_y_pos = ALTURA_TELA - 50;
 
     bool em_contato = false;
 
@@ -361,29 +361,29 @@ void verificar_colisoes() {
 }
 
 // DESENHO
-void desenhar_jogo() {    if (background_image) {
+void desenhar_jogo() {
+    if (background_image) {
         al_draw_scaled_bitmap(background_image,
                               0, 0, al_get_bitmap_width(background_image), al_get_bitmap_height(background_image),
                               0, 0, LARGURA_TELA, ALTURA_TELA, 0);
     }
 
-    // CHÃO PRINCIPAL COM OS BLOCOS DO MARIO KK
+    // CHÃO PRINCIPAL COM OS BLOCOS
     if (platform_block_image) {
         float chao_y_pos = ALTURA_TELA - 50;
         int num_blocos_chao = LARGURA_TELA / TAMANHO_BLOCO_PLATAFORMA;
-        if (LARGURA_TELA % TAMANHO_BLOCO_PLATAFORMA != 0) num_blocos_chao++; // Cobre toda a largura do chão
+        if (LARGURA_TELA % TAMANHO_BLOCO_PLATAFORMA != 0) num_blocos_chao++;
 
         for (int i = 0; i < num_blocos_chao; i++) {
             al_draw_scaled_bitmap(platform_block_image,
                                   0, 0, al_get_bitmap_width(platform_block_image), al_get_bitmap_height(platform_block_image),
                                   i * TAMANHO_BLOCO_PLATAFORMA, chao_y_pos,
-                                  TAMANHO_BLOCO_PLATAFORMA, 50, // Ajusta a altura para 50, como o chão original
+                                  TAMANHO_BLOCO_PLATAFORMA, 50,
                                   0);
         }
     }
 
-
-    // PLATAFORMAS COM OS BLOCOS DO MARIO TBM
+    // PLATAFORMAS COM OS BLOCOS
     if (platform_block_image) {
         for (int i = 0; i < MAX_PLATAFORMAS; i++) {
             int num_blocos_plataforma = plataformas[i].largura / TAMANHO_BLOCO_PLATAFORMA;
@@ -393,12 +393,11 @@ void desenhar_jogo() {    if (background_image) {
                 al_draw_scaled_bitmap(platform_block_image,
                                       0, 0, al_get_bitmap_width(platform_block_image), al_get_bitmap_height(platform_block_image),
                                       plataformas[i].x + (j * TAMANHO_BLOCO_PLATAFORMA), plataformas[i].y,
-                                      TAMANHO_BLOCO_PLATAFORMA, plataformas[i].altura, // Usa a altura original da plataforma
+                                      TAMANHO_BLOCO_PLATAFORMA, plataformas[i].altura,
                                       0);
             }
         }
     }
-
 
     float altura_desenhada = jogador.abaixado ? jogador.altura / 2.0f : jogador.altura;
     al_draw_filled_rectangle(jogador.x, jogador.y + (jogador.abaixado ? altura_desenhada : 0), jogador.x + jogador.largura, jogador.y + jogador.altura, cor_jogador);
@@ -418,13 +417,13 @@ void desenhar_jogo() {    if (background_image) {
     for (int i=0; i < MAX_TIROS_CAPANGA; i++) if (tiros_capangas[i].ativo) al_draw_filled_circle(tiros_capangas[i].x, tiros_capangas[i].y, 3, cor_tiro_capanga);
 
     char buffer[100];
-    sprintf(buffer, "VIDA: %d", jogador.vida);
+    snprintf(buffer, sizeof(buffer), "VIDA: %d", jogador.vida);
     al_draw_text(font, al_map_rgb(255, 255, 255), 20, 20, 0, buffer);
-    sprintf(buffer, "PONTOS: %d", pontuacao);
+    snprintf(buffer, sizeof(buffer), "PONTOS: %d", pontuacao);
     al_draw_text(font, al_map_rgb(255, 255, 255), 20, 50, 0, buffer);
 
     if (boss.ativo) {
-        sprintf(buffer, "BOSS: %d/%d", boss.vida, boss.vida_maxima);
+        snprintf(buffer, sizeof(buffer), "BOSS: %d/%d", boss.vida, boss.vida_maxima);
         al_draw_text(font, al_map_rgb(255, 255, 255), LARGURA_TELA - 150, 20, ALLEGRO_ALIGN_RIGHT, buffer);
     } else {
         al_draw_text(font, al_map_rgb(255, 255, 0), LARGURA_TELA/2, ALTURA_TELA/2, ALLEGRO_ALIGN_CENTER, "VILÃO DERROTADO!");

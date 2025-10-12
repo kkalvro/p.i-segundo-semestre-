@@ -1,11 +1,12 @@
 cmake_minimum_required(VERSION 3.10)
 project(projeto_jogo C)
 
-set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
 # Configurar caminhos para Homebrew (macOS)
-set(CMAKE_PREFIX_PATH "/opt/homebrew" "/usr/local")
+set(CMAKE_PREFIX_PATH "/opt/homebrew")
+set(ALLEGRO_LIBRARIES ${ALLEGRO_LIBRARIES} "-framework Cocoa -framework CoreAudio -framework OpenGL")
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(ALLEGRO REQUIRED
@@ -19,7 +20,7 @@ pkg_check_modules(ALLEGRO REQUIRED
     allegro_acodec-5
 )
 
-add_executable(projeto_jogo main.c)
+add_executable(projeto_jogo Quebra_Cabeça.c)
 
 # Configurações de include, link e flags
 target_include_directories(projeto_jogo PRIVATE ${ALLEGRO_INCLUDE_DIRS})
