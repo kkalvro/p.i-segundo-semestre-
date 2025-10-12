@@ -361,8 +361,7 @@ void verificar_colisoes() {
 }
 
 // DESENHO
-void desenhar_jogo() {
-    if (background_image) {
+void desenhar_jogo() {    if (background_image) {
         al_draw_scaled_bitmap(background_image,
                               0, 0, al_get_bitmap_width(background_image), al_get_bitmap_height(background_image),
                               0, 0, LARGURA_TELA, ALTURA_TELA, 0);
