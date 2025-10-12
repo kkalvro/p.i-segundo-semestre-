@@ -51,14 +51,35 @@ target_link_directories(lobby PRIVATE ${ALLEGRO_LIBRARY_DIRS})
 target_link_libraries(lobby ${ALLEGRO_LIBRARIES})
 
 # Adivinha (fase 2.c)
-add_executable(adivinha "fase 2.c")
+add_executable(adivinha "fase 2.c"
+        bobbie_goods.c)
 target_include_directories(adivinha PRIVATE ${ALLEGRO_INCLUDE_DIRS})
 target_link_directories(adivinha PRIVATE ${ALLEGRO_LIBRARY_DIRS})
 target_link_libraries(adivinha ${ALLEGRO_LIBRARIES})
 
+# Quebra Cabeça (quebra_cabeca)
+add_executable(quebra_cabeca quebra_cabeca.c)
+target_include_directories(quebra_cabeca PRIVATE ${ALLEGRO_INCLUDE_DIRS})
+target_link_directories(quebra_cabeca PRIVATE ${ALLEGRO_LIBRARY_DIRS})
+target_link_libraries(quebra_cabeca ${ALLEGRO_LIBRARIES})
+
+# Menu (menu_do_jogo.c)
+add_executable(menu menu_do_jogo.c)
+target_include_directories(menu PRIVATE ${ALLEGRO_INCLUDE_DIRS})
+target_link_directories(menu PRIVATE ${ALLEGRO_LIBRARY_DIRS})
+target_link_libraries(menu ${ALLEGRO_LIBRARIES})
+
+# Desenho (bobbie_goods.c)
+add_executable(desenho bobbie_goods.c)
+target_include_directories(desenho PRIVATE ${ALLEGRO_INCLUDE_DIRS})
+target_link_directories(desenho PRIVATE ${ALLEGRO_LIBRARY_DIRS})
+target_link_libraries(desenho ${ALLEGRO_LIBRARIES})
+
+
 # -----------------------------
 # Copiar assets para build
 # -----------------------------
+
 if(EXISTS ${CMAKE_SOURCE_DIR}/assets)
     file(COPY ${CMAKE_SOURCE_DIR}/assets DESTINATION ${CMAKE_BINARY_DIR})
 endif()

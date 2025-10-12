@@ -21,8 +21,11 @@
   <component name="CMakeRunConfigurationManager">
     <generated>
       <config projectName="projeto_jogo" targetName="projeto_jogo" />
+      <config projectName="projeto_jogo" targetName="menu" />
       <config projectName="projeto_jogo" targetName="adivinha" />
+      <config projectName="projeto_jogo" targetName="quebra_cabeca" />
       <config projectName="projeto_jogo" targetName="lobby" />
+      <config projectName="projeto_jogo" targetName="desenho" />
       <config projectName="projeto_jogo" targetName="final" />
     </generated>
   </component>
@@ -39,37 +42,44 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7948da72-5edb-44cf-99cf-7055c6ef70d3" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore.bak" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/editor.xml.bak" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml.bak" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/p.i-segundo-semestre-.iml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml.bak" beforeDir="false" />
+      <change afterPath="$PROJECT_DIR$/bobbie_goods.c" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/menu_do_jogo.c" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/quebra_cabeca.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/CMakeCache.txt" beforeDir="false" afterPath="$PROJECT_DIR$/build/CMakeCache.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/CMakeFiles/4.1.0/CMakeDetermineCompilerABI_C.bin" beforeDir="false" afterPath="$PROJECT_DIR$/build/CMakeFiles/4.1.0/CMakeDetermineCompilerABI_C.bin" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/CMakeFiles/CMakeConfigureLog.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/build/CMakeFiles/CMakeConfigureLog.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/CMakeFiles/Makefile.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/build/CMakeFiles/Makefile.cmake" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/CMakeFiles/Makefile2" beforeDir="false" afterPath="$PROJECT_DIR$/build/CMakeFiles/Makefile2" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/CMakeFiles/Progress/1" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/CMakeFiles/Progress/count.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/CMakeFiles/TargetDirectories.txt" beforeDir="false" afterPath="$PROJECT_DIR$/build/CMakeFiles/TargetDirectories.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/CMakeFiles/progress.marks" beforeDir="false" afterPath="$PROJECT_DIR$/build/CMakeFiles/progress.marks" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/CMakeFiles/projeto_jogo.dir/DependInfo.cmake" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/CMakeFiles/projeto_jogo.dir/Quebra_Cabeça.c.o.d" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/CMakeFiles/projeto_jogo.dir/build.make" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/CMakeFiles/projeto_jogo.dir/cmake_clean.cmake" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/CMakeFiles/projeto_jogo.dir/compiler_depend.make" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/CMakeFiles/projeto_jogo.dir/compiler_depend.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/CMakeFiles/projeto_jogo.dir/depend.make" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/CMakeFiles/projeto_jogo.dir/flags.make" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/CMakeFiles/projeto_jogo.dir/link.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/CMakeFiles/projeto_jogo.dir/main.c.o" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/CMakeFiles/projeto_jogo.dir/main.c.o.d" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/CMakeFiles/projeto_jogo.dir/progress.make" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Makefile" beforeDir="false" afterPath="$PROJECT_DIR$/build/Makefile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/projeto_jogo" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/inferno.jpg" beforeDir="false" afterPath="$PROJECT_DIR$/assets/inferno.jpg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/instrucoes.jpg" beforeDir="false" afterPath="$PROJECT_DIR$/assets/instrucoes.jpg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/assets/correndo/run1.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/assets/correndo/run2.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/assets/correndo/run3.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/assets/correndo/run4.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/assets/correndo/run5.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/assets/correndo/run6.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/assets/correndo/run7.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/assets/correndo/run8.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/assets/exemplo_arte_2.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/assets/exemplo_arte_3.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/assets/floor.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/assets/fundo.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/assets/img1.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/assets/img2.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/assets/img3.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/assets/img5.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/assets/img6.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/assets/inferno.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/assets/instrucoes.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/assets/jc.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/assets/lobby.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/assets/parada.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/assets/pintinho.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/assets/pulando/jump1.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/assets/pulando/jump2.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/assets/pulando/jump3.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/assets/pulando/jump4.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/assets/pulando/jump5.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/assets/pulando/jump6.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/assets/pulando/jump7.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/assets/pulando/jump8.png" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -131,9 +141,13 @@
     "CMake Application.adivinha.executor": "Run",
     "CMake Application.al_demo.executor": "Valgrind",
     "CMake Application.cute.executor": "Run",
+    "CMake Application.desenho.executor": "Run",
     "CMake Application.fase2.executor": "Run",
+    "CMake Application.final.executor": "Run",
     "CMake Application.lobby.executor": "Run",
+    "CMake Application.menu.executor": "Run",
     "CMake Application.projeto_jogo.executor": "Run",
+    "CMake Application.quebra_cabeca.executor": "Run",
     "Makefile Target.Unnamed.executor": "Run",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.RadMigrateCodeStyle": "true",
@@ -163,13 +177,18 @@
       <recent name="$PROJECT_DIR$" />
     </key>
   </component>
-  <component name="RunManager" selected="CMake Application.adivinha">
-    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
+  <component name="RunManager" selected="CMake Application.final">
+    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
+      <method v="2">
+        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="adivinha" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="projeto_jogo" TARGET_NAME="adivinha" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="projeto_jogo" RUN_TARGET_NAME="adivinha">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="adivinha" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="projeto_jogo" TARGET_NAME="adivinha" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="projeto_jogo" RUN_TARGET_NAME="adivinha">
+    <configuration name="desenho" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="projeto_jogo" TARGET_NAME="desenho" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="projeto_jogo" RUN_TARGET_NAME="desenho">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -184,10 +203,23 @@
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
+    <configuration name="menu" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="projeto_jogo" TARGET_NAME="menu" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="projeto_jogo" RUN_TARGET_NAME="menu">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="quebra_cabeca" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="projeto_jogo" TARGET_NAME="quebra_cabeca" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="projeto_jogo" RUN_TARGET_NAME="quebra_cabeca">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
     <list>
       <item itemvalue="CMake Application.adivinha" />
+      <item itemvalue="CMake Application.desenho" />
       <item itemvalue="CMake Application.final" />
       <item itemvalue="CMake Application.lobby" />
+      <item itemvalue="CMake Application.menu" />
+      <item itemvalue="CMake Application.quebra_cabeca" />
     </list>
   </component>
   <component name="TaskManager">
@@ -244,7 +276,8 @@
       <workItem from="1760306933610" duration="173000" />
       <workItem from="1760307117782" duration="31000" />
       <workItem from="1760307167716" duration="295000" />
-      <workItem from="1760307474293" duration="1338000" />
+      <workItem from="1760307474293" duration="2415000" />
+      <workItem from="1760309968398" duration="2015000" />
     </task>
     <servers />
   </component>
