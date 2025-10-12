@@ -1,7 +1,7 @@
-CMakeFiles/projeto_jogo.dir/main.c.o: \
+CMakeFiles/fase1.dir/main.c.o: \
   /Users/duarte/CLionProjects/p.i-segundo-semestre-/main.c \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/allegro.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/base.h \
+  /opt/homebrew/include/allegro5/allegro.h \
+  /opt/homebrew/include/allegro5/base.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/errno.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/errno.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/cdefs.h \
@@ -149,59 +149,59 @@ CMakeFiles/projeto_jogo.dir/main.c.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_key_t.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_fsblkcnt_t.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_fsfilcnt_t.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/internal/alconfig.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/platform/alplatf.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/platform/alosxcfg.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/platform/astdint.h \
+  /opt/homebrew/include/allegro5/internal/alconfig.h \
+  /opt/homebrew/include/allegro5/platform/alplatf.h \
+  /opt/homebrew/include/allegro5/platform/alosxcfg.h \
+  /opt/homebrew/include/allegro5/platform/astdint.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/inttypes.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/inttypes.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_inttypes.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/platform/astdbool.h \
+  /opt/homebrew/include/allegro5/platform/astdbool.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/stdbool.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/altime.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/bitmap.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/color.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/bitmap_draw.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/bitmap_io.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/file.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/path.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/utf8.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/bitmap_lock.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/blender.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/clipboard.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/display.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/events.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/config.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/cpu.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/debug.h \
+  /opt/homebrew/include/allegro5/altime.h \
+  /opt/homebrew/include/allegro5/bitmap.h \
+  /opt/homebrew/include/allegro5/color.h \
+  /opt/homebrew/include/allegro5/bitmap_draw.h \
+  /opt/homebrew/include/allegro5/bitmap_io.h \
+  /opt/homebrew/include/allegro5/file.h \
+  /opt/homebrew/include/allegro5/path.h \
+  /opt/homebrew/include/allegro5/utf8.h \
+  /opt/homebrew/include/allegro5/bitmap_lock.h \
+  /opt/homebrew/include/allegro5/blender.h \
+  /opt/homebrew/include/allegro5/clipboard.h \
+  /opt/homebrew/include/allegro5/display.h \
+  /opt/homebrew/include/allegro5/events.h \
+  /opt/homebrew/include/allegro5/config.h \
+  /opt/homebrew/include/allegro5/cpu.h \
+  /opt/homebrew/include/allegro5/debug.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/assert.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_assert.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_static_assert.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/drawing.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/error.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/fixed.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/fmaths.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/inline/fmaths.inl \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/fshook.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/fullscreen_mode.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/haptic.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/joystick.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/keyboard.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/keycodes.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/mouse.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/touch_input.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/memory.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/monitor.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/mouse_cursor.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/render_state.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/shader.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/transformations.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/system.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/threads.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/timer.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/tls.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/alcompat.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/platform/alosx.h \
+  /opt/homebrew/include/allegro5/drawing.h \
+  /opt/homebrew/include/allegro5/error.h \
+  /opt/homebrew/include/allegro5/fixed.h \
+  /opt/homebrew/include/allegro5/fmaths.h \
+  /opt/homebrew/include/allegro5/inline/fmaths.inl \
+  /opt/homebrew/include/allegro5/fshook.h \
+  /opt/homebrew/include/allegro5/fullscreen_mode.h \
+  /opt/homebrew/include/allegro5/haptic.h \
+  /opt/homebrew/include/allegro5/joystick.h \
+  /opt/homebrew/include/allegro5/keyboard.h \
+  /opt/homebrew/include/allegro5/keycodes.h \
+  /opt/homebrew/include/allegro5/mouse.h \
+  /opt/homebrew/include/allegro5/touch_input.h \
+  /opt/homebrew/include/allegro5/memory.h \
+  /opt/homebrew/include/allegro5/monitor.h \
+  /opt/homebrew/include/allegro5/mouse_cursor.h \
+  /opt/homebrew/include/allegro5/render_state.h \
+  /opt/homebrew/include/allegro5/shader.h \
+  /opt/homebrew/include/allegro5/transformations.h \
+  /opt/homebrew/include/allegro5/system.h \
+  /opt/homebrew/include/allegro5/threads.h \
+  /opt/homebrew/include/allegro5/timer.h \
+  /opt/homebrew/include/allegro5/tls.h \
+  /opt/homebrew/include/allegro5/alcompat.h \
+  /opt/homebrew/include/allegro5/platform/alosx.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/stdio.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_stdio.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_va_list.h \
@@ -230,8 +230,8 @@ CMakeFiles/projeto_jogo.dir/main.c.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/pthread/qos.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/qos.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_mach_port_t.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/allegro_primitives.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/allegro_font.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/allegro_ttf.h \
-  /opt/homebrew/Cellar/allegro/5.2.10.1_2/include/allegro5/allegro_image.h \
+  /opt/homebrew/include/allegro5/allegro_primitives.h \
+  /opt/homebrew/include/allegro5/allegro_font.h \
+  /opt/homebrew/include/allegro5/allegro_ttf.h \
+  /opt/homebrew/include/allegro5/allegro_image.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/math.h

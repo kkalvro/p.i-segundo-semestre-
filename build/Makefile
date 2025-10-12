@@ -117,41 +117,115 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named projeto_jogo
+# Target rules for targets named fase1
 
 # Build rule for target.
-projeto_jogo: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 projeto_jogo
-.PHONY : projeto_jogo
+fase1: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 fase1
+.PHONY : fase1
 
 # fast build rule for target.
-projeto_jogo/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/projeto_jogo.dir/build.make CMakeFiles/projeto_jogo.dir/build
-.PHONY : projeto_jogo/fast
+fase1/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/fase1.dir/build.make CMakeFiles/fase1.dir/build
+.PHONY : fase1/fast
 
-Quebra_Cabeça.o: Quebra_Cabeça.c.o
-.PHONY : Quebra_Cabeça.o
+#=============================================================================
+# Target rules for targets named lobby
+
+# Build rule for target.
+lobby: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 lobby
+.PHONY : lobby
+
+# fast build rule for target.
+lobby/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lobby.dir/build.make CMakeFiles/lobby.dir/build
+.PHONY : lobby/fast
+
+#=============================================================================
+# Target rules for targets named fase2
+
+# Build rule for target.
+fase2: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 fase2
+.PHONY : fase2
+
+# fast build rule for target.
+fase2/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/fase2.dir/build.make CMakeFiles/fase2.dir/build
+.PHONY : fase2/fast
+
+fase_2.o: fase_2.c.o
+.PHONY : fase_2.o
 
 # target to build an object file
-Quebra_Cabeça.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/projeto_jogo.dir/build.make CMakeFiles/projeto_jogo.dir/Quebra_Cabeça.c.o
-.PHONY : Quebra_Cabeça.c.o
+fase_2.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/fase2.dir/build.make CMakeFiles/fase2.dir/fase_2.c.o
+.PHONY : fase_2.c.o
 
-Quebra_Cabeça.i: Quebra_Cabeça.c.i
-.PHONY : Quebra_Cabeça.i
+fase_2.i: fase_2.c.i
+.PHONY : fase_2.i
 
 # target to preprocess a source file
-Quebra_Cabeça.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/projeto_jogo.dir/build.make CMakeFiles/projeto_jogo.dir/Quebra_Cabeça.c.i
-.PHONY : Quebra_Cabeça.c.i
+fase_2.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/fase2.dir/build.make CMakeFiles/fase2.dir/fase_2.c.i
+.PHONY : fase_2.c.i
 
-Quebra_Cabeça.s: Quebra_Cabeça.c.s
-.PHONY : Quebra_Cabeça.s
+fase_2.s: fase_2.c.s
+.PHONY : fase_2.s
 
 # target to generate assembly for a file
-Quebra_Cabeça.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/projeto_jogo.dir/build.make CMakeFiles/projeto_jogo.dir/Quebra_Cabeça.c.s
-.PHONY : Quebra_Cabeça.c.s
+fase_2.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/fase2.dir/build.make CMakeFiles/fase2.dir/fase_2.c.s
+.PHONY : fase_2.c.s
+
+lobby.o: lobby.c.o
+.PHONY : lobby.o
+
+# target to build an object file
+lobby.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lobby.dir/build.make CMakeFiles/lobby.dir/lobby.c.o
+.PHONY : lobby.c.o
+
+lobby.i: lobby.c.i
+.PHONY : lobby.i
+
+# target to preprocess a source file
+lobby.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lobby.dir/build.make CMakeFiles/lobby.dir/lobby.c.i
+.PHONY : lobby.c.i
+
+lobby.s: lobby.c.s
+.PHONY : lobby.s
+
+# target to generate assembly for a file
+lobby.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/lobby.dir/build.make CMakeFiles/lobby.dir/lobby.c.s
+.PHONY : lobby.c.s
+
+main.o: main.c.o
+.PHONY : main.o
+
+# target to build an object file
+main.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/fase1.dir/build.make CMakeFiles/fase1.dir/main.c.o
+.PHONY : main.c.o
+
+main.i: main.c.i
+.PHONY : main.i
+
+# target to preprocess a source file
+main.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/fase1.dir/build.make CMakeFiles/fase1.dir/main.c.i
+.PHONY : main.c.i
+
+main.s: main.c.s
+.PHONY : main.s
+
+# target to generate assembly for a file
+main.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/fase1.dir/build.make CMakeFiles/fase1.dir/main.c.s
+.PHONY : main.c.s
 
 # Help Target
 help:
@@ -161,10 +235,18 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
-	@echo "... projeto_jogo"
-	@echo "... Quebra_Cabeça.o"
-	@echo "... Quebra_Cabeça.i"
-	@echo "... Quebra_Cabeça.s"
+	@echo "... fase1"
+	@echo "... fase2"
+	@echo "... lobby"
+	@echo "... fase_2.o"
+	@echo "... fase_2.i"
+	@echo "... fase_2.s"
+	@echo "... lobby.o"
+	@echo "... lobby.i"
+	@echo "... lobby.s"
+	@echo "... main.o"
+	@echo "... main.i"
+	@echo "... main.s"
 .PHONY : help
 
 

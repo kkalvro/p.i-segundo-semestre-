@@ -4,7 +4,7 @@
 # compile C with /usr/bin/cc
 C_DEFINES = 
 
-C_INCLUDES = -I/opt/homebrew/Cellar/allegro/5.2.10.1_2/include
+C_INCLUDES = -I/opt/homebrew/include -I/opt/homebrew/Cellar/allegro/5.2.10.1_2/include
 
 C_FLAGSarm64 = -std=gnu99 -arch arm64
 
