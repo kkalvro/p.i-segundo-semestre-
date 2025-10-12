@@ -87,9 +87,11 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "C/C++ File.Quebra Cabeça.c.executor": "Run",
+    "C/C++ File.Unnamed.executor": "Run",
     "C/C++ File.teste.c.executor": "Run",
     "CMake Application.al_demo.executor": "Valgrind",
     "CMake Application.projeto_jogo.executor": "Run",
+    "Makefile Target.Unnamed.executor": "Run",
     "RunOnceActivity.RadMigrateCodeStyle": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
@@ -118,11 +120,6 @@
   </component>
   <component name="RunManager">
     <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
-      <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="projeto_jogo" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="projeto_jogo" TARGET_NAME="projeto_jogo" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="projeto_jogo" RUN_TARGET_NAME="projeto_jogo">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -168,7 +165,7 @@
       <workItem from="1760141177042" duration="5565000" />
       <workItem from="1760174716596" duration="460000" />
       <workItem from="1760175200162" duration="6223000" />
-      <workItem from="1760286605995" duration="3476000" />
+      <workItem from="1760286605995" duration="5078000" />
     </task>
     <servers />
   </component>

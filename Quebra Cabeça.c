@@ -4,7 +4,7 @@
 #include <math.h>
 #include <direct.h>
 #include <string.h>
-
+#include <unistd.h>
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_image.h>
 #include <allegro5/allegro_primitives.h>
