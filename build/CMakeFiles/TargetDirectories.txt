@@ -1,5 +1,0 @@
-/Users/duarte/CLionProjects/p.i-segundo-semestre-/build/CMakeFiles/fase1.dir
-/Users/duarte/CLionProjects/p.i-segundo-semestre-/build/CMakeFiles/lobby.dir
-/Users/duarte/CLionProjects/p.i-segundo-semestre-/build/CMakeFiles/fase2.dir
-/Users/duarte/CLionProjects/p.i-segundo-semestre-/build/CMakeFiles/edit_cache.dir
-/Users/duarte/CLionProjects/p.i-segundo-semestre-/build/CMakeFiles/rebuild_cache.dir
