@@ -4,6 +4,8 @@
 #include <math.h>
 #include <string.h>
 #include <allegro5/allegro.h>
+#include <allegro5/allegro_audio.h>
+#include <allegro5/allegro_acodec.h>
 #include <allegro5/allegro_image.h>
 #include <allegro5/allegro_native_dialog.h>
 #include <allegro5/allegro_primitives.h>
@@ -18,8 +20,8 @@
 #define GRAVIDADE 0.8f
 #define FORCA_PULO -30.0f
 #define VELOCIDADE_MOVIMENTO 6.0f
-#define ALTURA_TELA 720
-#define LARGURA_TELA 1280
+#define ALTURA_TELA SCREEN_H
+#define LARGURA_TELA SCREEN_W
 #define NUM_SPRITES 8
 #define TEMPO_ANIMACAO 5
 
@@ -1217,20 +1219,25 @@ int executar_jogo_colorir(ALLEGRO_DISPLAY* display_main) {
 }
 
 // ----------------------- Estruturas e funções do Boss Final -----------------------
-#define LARGURA_TELA_BOSS 1280
-#define ALTURA_TELA_BOSS 720
+#define LARGURA_TELA_BOSS SCREEN_W
+#define ALTURA_TELA_BOSS SCREEN_H
 #define FPS_BOSS 60
 #define GRAVIDADE_BOSS 0.4f
 #define FORCA_PULO_BOSS -12.5f
-#define VELOCIDADE_MOVIMENTO_BOSS 3.0f
+#define VELOCIDADE_MOVIMENTO_BOSS 5.0f
 #define MAX_PLATAFORMAS_BOSS 8
 #define TAMANHO_BLOCO_PLATAFORMA_BOSS 32
 #define MAX_TIROS_JOGADOR_BOSS 50
-#define MAX_TIROS_BOSS_FINAL 40
+#define MAX_TIROS_BOSS_FINAL 50
 #define MAX_CAPANGAS_BOSS 4
 #define MAX_TIROS_CAPANGA_BOSS 20
 #define VIDA_CAPANGA_BOSS 50
-#define VELOCIDADE_CAPANGA_BOSS 1.25f
+#define VELOCIDADE_CAPANGA_BOSS 1.1f
+#define MAX_SPRITES_PULO_BOSS 8
+#define MAX_SPRITES_CORRIDA_BOSS 8
+#define MAX_SPRITES_MORTE_BOSS 5
+#define VELOCIDADE_TIRO_BOSS_FINAL 3.0f
+#define VELOCIDADE_TIRO_CAPANGA 2.5f
 
 typedef struct {
     float x, y, vel_x, vel_y;
@@ -1245,7 +1252,7 @@ typedef struct {
 typedef struct {
     float x, y, vel_x, vel_y;
     int largura, altura;
-    bool no_chao, abaixado;
+    bool no_chao, descendo_plataforma;
     int direcao, vida;
 } JogadorBoss;
 
@@ -1260,140 +1267,244 @@ typedef struct {
     float x, y, vel_x, vel_y;
     int largura, altura, vida, tempo_tiro;
     bool ativo, no_chao;
+    int direcao;
 } CapangaBoss;
 
-// ----------------------- Funções auxiliares do Boss Final -----------------------
-void atualizar_fisica_entidade_boss(float* x, float* y, float* vel_y, int largura, int altura, bool* no_chao, bool ignora_plataformas, PlataformaBoss* plataformas) {
+// ESTRUTURA PARA ORGANIZAR OS DADOS DO HUD
+typedef struct {
+    int vida_jogador;
+    int pontuacao;
+    int boss_vida_atual;
+    int boss_vida_max;
+    bool boss_ativo;
+    bool jogador_morto;
+} DadosHUD;
+
+// funcoes auxiliares
+void atualizar_fisica_entidade_boss(float* x, float* y, float* vel_y, int largura, int altura,
+                                     bool* no_chao, bool ignora_plataformas, PlataformaBoss* plataformas) {
     if (!*no_chao) *vel_y += GRAVIDADE_BOSS;
     *y += *vel_y;
 
-    float chao_y_pos = ALTURA_TELA_BOSS - 50;
-    bool em_contato = false;
+    float chao_y = ALTURA_TELA_BOSS - 50;
+    bool colidiu_chao = (*y >= chao_y - altura);
 
-    if (*y >= chao_y_pos - altura) {
-        *y = chao_y_pos - altura;
-        em_contato = true;
+    if (colidiu_chao) {
+        *y = chao_y - altura;
+        *vel_y = 0;
+        *no_chao = true;
+        return;
     }
-    else if (*vel_y >= 0 && !ignora_plataformas) {
+
+    if (*vel_y >= 0 && !ignora_plataformas) {
         for (int i = 0; i < MAX_PLATAFORMAS_BOSS; i++) {
-            if (*x + largura > plataformas[i].x && *x < plataformas[i].x + plataformas[i].largura &&
-                *y + altura >= plataformas[i].y && *y + altura <= plataformas[i].y + 10) {
+            bool colide_x = (*x + largura > plataformas[i].x) && (*x < plataformas[i].x + plataformas[i].largura);
+            bool colide_y = (*y + altura >= plataformas[i].y) && (*y + altura <= plataformas[i].y + 10);
+
+            if (colide_x && colide_y) {
                 *y = plataformas[i].y - altura;
-                em_contato = true;
-                break;
+                *vel_y = 0;
+                *no_chao = true;
+                return;
             }
         }
     }
-    if (em_contato) *vel_y = 0;
-    *no_chao = em_contato;
+
+    *no_chao = false;
 }
 
 void criar_tiro_boss(TiroBoss tiros[], int max_tiros, float x, float y, float vel_x, float vel_y) {
     for (int i = 0; i < max_tiros; i++) {
         if (!tiros[i].ativo) {
-            tiros[i] = (TiroBoss){ .x = x, .y = y, .vel_x = vel_x, .vel_y = vel_y, .ativo = true };
+            tiros[i].x = x;
+            tiros[i].y = y;
+            tiros[i].vel_x = vel_x;
+            tiros[i].vel_y = vel_y;
+            tiros[i].ativo = true;
             break;
         }
     }
 }
 
-void criar_tiros_direcionados_boss(TiroBoss tiros[], int max_tiros, float start_x, float start_y, float target_x, float target_y, float speed) {
+void criar_tiros_direcionados_boss(TiroBoss tiros[], int max_tiros, float start_x, float start_y,
+                                   float target_x, float target_y, float speed) {
     float dx = target_x - start_x;
     float dy = target_y - start_y;
-    float dist = sqrt(dx * dx + dy * dy);
-    if (dist > 0)
+    float dist = sqrtf(dx * dx + dy * dy);
+
+    if (dist > 0) {
         criar_tiro_boss(tiros, max_tiros, start_x, start_y, (dx / dist) * speed, (dy / dist) * speed);
+    }
 }
 
 bool colidiu_boss(float x1, float y1, int w1, int h1, float x2, float y2, int w2, int h2) {
     return (x1 < x2 + w2 && x1 + w1 > x2 && y1 < y2 + h2 && y1 + h1 > y2);
 }
 
-// ----------------------- Função do Boss Final (VERSÃO CORRIGIDA) -----------------------
+// FUNÇÃO AUXILIAR PARA DESENHAR O HUD
+void desenhar_hud(ALLEGRO_FONT* font, DadosHUD dados) {
+    char buffer[100];
+    ALLEGRO_COLOR cor_branca = al_map_rgb(255, 255, 255);
+
+    // 1. VIDA DO JOGADOR
+    snprintf(buffer, sizeof(buffer), "VIDA: %d", dados.vida_jogador);
+    al_draw_text(font, cor_branca, 20, 20, 0, buffer);
+
+    // 2. PONTUAÇÃO
+    snprintf(buffer, sizeof(buffer), "PONTOS: %d", dados.pontuacao);
+    al_draw_text(font, cor_branca, 20, 50, 0, buffer);
+
+    // 3. VIDA DO BOSS ou MENSAGEM DE VITÓRIA
+    if (dados.boss_ativo) {
+        snprintf(buffer, sizeof(buffer), "BOSS: %d/%d", dados.boss_vida_atual, dados.boss_vida_max);
+        al_draw_text(font, cor_branca, LARGURA_TELA_BOSS - 150, 20,
+                   ALLEGRO_ALIGN_RIGHT, buffer);
+    } else {
+        al_draw_text(font, al_map_rgb(255, 255, 0), LARGURA_TELA_BOSS / 2,
+                   ALTURA_TELA_BOSS / 2, ALLEGRO_ALIGN_CENTER, "VILAO DERROTADO!");
+    }
+
+    // 4. TELA DA MORTE
+    if (dados.jogador_morto) {
+        al_draw_filled_rectangle(0, 0, LARGURA_TELA_BOSS, ALTURA_TELA_BOSS,
+                               al_map_rgba(0, 0, 0, 180));
+
+        al_draw_text(font, al_map_rgb(255, 50, 50), LARGURA_TELA_BOSS / 2,
+                   ALTURA_TELA_BOSS / 2 - 40, ALLEGRO_ALIGN_CENTER,
+                   "VOCE MORREU, TE FALTA ODIO");
+
+        al_draw_text(font, cor_branca, LARGURA_TELA_BOSS / 2,
+                   ALTURA_TELA_BOSS / 2 + 20, ALLEGRO_ALIGN_CENTER,
+                   "TECLE R PARA REINICIAR");
+    }
+}
+
+
+// funcao Principal
 int executar_boss_final(ALLEGRO_DISPLAY* display_main) {
-    ALLEGRO_DISPLAY* display = display_main;
+    // inicialização
     ALLEGRO_TIMER* timer = al_create_timer(1.0 / FPS_BOSS);
     ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();
     ALLEGRO_FONT* font = al_create_builtin_font();
 
-    // Carrega assets
+    // carrega e toca a musica
+    ALLEGRO_SAMPLE* musica_fundo = al_load_sample("assets/paranoid.wav");
+    ALLEGRO_SAMPLE_INSTANCE* instancia_musica = NULL;
+
+    if (musica_fundo) {
+        instancia_musica = al_create_sample_instance(musica_fundo);
+        al_set_sample_instance_playmode(instancia_musica, ALLEGRO_PLAYMODE_LOOP);
+        al_attach_sample_instance_to_mixer(instancia_musica, al_get_default_mixer());
+        al_set_sample_instance_gain(instancia_musica, 1.0);
+        al_play_sample_instance(instancia_musica);
+    }
+
+    // imagens de fundo e das plataformas
     ALLEGRO_BITMAP* background_image = al_load_bitmap("assets/inferno.jpg");
     ALLEGRO_BITMAP* platform_block_image = al_load_bitmap("assets/floor.png");
 
-    if (!background_image) {
-        printf("Erro ao carregar assets/inferno.jpg\n");
-        // Continua mesmo sem imagem
-    }
-    if (!platform_block_image) {
-        printf("Erro ao carregar assets/floor.png\n");
-        // Continua mesmo sem imagem
-    }
+    // sprite boss e capangas
+    ALLEGRO_BITMAP* boss_image = al_load_bitmap("assets/hitler.png");
+    ALLEGRO_BITMAP* capanga_image = al_load_bitmap("assets/capanga.png");
 
-    // INICIALIZAÇÃO CORRETA - ZERANDO TUDO
-    JogadorBoss jogador;
-    BossFinal boss;
-    CapangaBoss capangas[MAX_CAPANGAS_BOSS];
+
+    // sprites do jogador
+    ALLEGRO_BITMAP* sprite_parado = al_load_bitmap("assets/parada.png");
+    ALLEGRO_BITMAP* sprites_pulo[MAX_SPRITES_PULO_BOSS];
+    ALLEGRO_BITMAP* sprites_corrida[MAX_SPRITES_CORRIDA_BOSS];
+    ALLEGRO_BITMAP* sprites_morte[MAX_SPRITES_MORTE_BOSS];
+
+    const char* arquivos_pulo[] = {
+        "assets/jump1.png", "assets/jump2.png", "assets/jump3.png", "assets/jump4.png",
+        "assets/jump5.png", "assets/jump6.png", "assets/jump7.png", "assets/jump8.png"
+    };
+    const char* arquivos_corrida[] = {
+        "assets/run1.png", "assets/run2.png", "assets/run3.png", "assets/run4.png",
+        "assets/run5.png", "assets/run6.png", "assets/run7.png", "assets/run8.png"
+    };
+    const char* arquivos_morte[] = {
+        "assets/die1.png", "assets/die2.png", "assets/die3.png", "assets/die4.png", "assets/die5.png"
+    };
+
+    for (int i = 0; i < MAX_SPRITES_PULO_BOSS; i++)
+        sprites_pulo[i] = al_load_bitmap(arquivos_pulo[i]);
+    for (int i = 0; i < MAX_SPRITES_CORRIDA_BOSS; i++)
+        sprites_corrida[i] = al_load_bitmap(arquivos_corrida[i]);
+    for (int i = 0; i < MAX_SPRITES_MORTE_BOSS; i++)
+        sprites_morte[i] = al_load_bitmap(arquivos_morte[i]);
+
+    // cria jogador
+    JogadorBoss jogador = {
+        .x = 100,
+        .y = ALTURA_TELA_BOSS - 125,
+        .vel_x = 0,
+        .vel_y = 0,
+        .largura = 40,
+        .altura = 60,
+        .no_chao = true,
+        .descendo_plataforma = false,
+        .direcao = 1,
+        .vida = 100
+    };
+
+    // cria boss
+    BossFinal boss = {
+        .x = LARGURA_TELA_BOSS - 300,
+        .y = ALTURA_TELA_BOSS - 550,
+        .vida = 500,
+        .vida_maxima = 500,
+        .ativo = true,
+        .segunda_fase = false,
+        .tempo_tiro = 0,
+        .largura = 300,
+        .altura = 500
+    };
+
+    // plataformas
+    PlataformaBoss plataformas[MAX_PLATAFORMAS_BOSS] = {
+        {50, 270, 350, 10}, {550, 545, 400, 10}, {100, 120, 400, 10}, {150, 420, 400, 10},
+        {50, 545, 400, 10}, {500, 270, 400, 10}, {600, 120, 400, 10}, {650, 420, 400, 10}
+    };
+
+    // arrays de tiros
     TiroBoss tiros_jogador[MAX_TIROS_JOGADOR_BOSS];
     TiroBoss tiros_boss[MAX_TIROS_BOSS_FINAL];
     TiroBoss tiros_capangas[MAX_TIROS_CAPANGA_BOSS];
 
-    // Zera todas as variáveis
-    memset(&jogador, 0, sizeof(jogador));
-    memset(&boss, 0, sizeof(boss));
-    memset(capangas, 0, sizeof(capangas));
-    memset(tiros_jogador, 0, sizeof(tiros_jogador));
-    memset(tiros_boss, 0, sizeof(tiros_boss));
-    memset(tiros_capangas, 0, sizeof(tiros_capangas));
+    for (int i = 0; i < MAX_TIROS_JOGADOR_BOSS; i++)
+        tiros_jogador[i].ativo = false;
+    for (int i = 0; i < MAX_TIROS_BOSS_FINAL; i++)
+        tiros_boss[i].ativo = false;
+    for (int i = 0; i < MAX_TIROS_CAPANGA_BOSS; i++)
+        tiros_capangas[i].ativo = false;
 
-    // Inicializa com valores específicos
-    jogador.x = 100;
-    jogador.y = ALTURA_TELA_BOSS - 125;
-    jogador.largura = 40;
-    jogador.altura = 60;
-    jogador.no_chao = true;
-    jogador.abaixado = false;
-    jogador.direcao = 1;
-    jogador.vida = 100;
+    // capangas
+    CapangaBoss capangas[MAX_CAPANGAS_BOSS];
+    for (int i = 0; i < MAX_CAPANGAS_BOSS; i++)
+        capangas[i].ativo = false;
 
-    boss.x = LARGURA_TELA_BOSS - 300;
-    boss.y = ALTURA_TELA_BOSS - 550;
-    boss.vida = 500;
-    boss.vida_maxima = 500;
-    boss.ativo = true;
-    boss.segunda_fase = false;
-    boss.tempo_tiro = 0;
-    boss.largura = 300;
-    boss.altura = 500;
+    // variaveus de animacao
+    int frame_pulo = 0, frame_corrida = 0, frame_morte = 0;
+    float tempo_frame_pulo = 0, tempo_frame_corrida = 0, tempo_frame_morte = 0;
+    bool jogador_morrendo = false;
+    bool jogador_morto = false;
 
-    PlataformaBoss plataformas[MAX_PLATAFORMAS_BOSS] = {
-        {50, 270, 350, 10}, {550, 545, 400, 10},
-        {100, 120, 400, 10}, {150, 420, 400, 10},
-        {50, 545, 400, 10},  {500, 270, 400, 10},
-        {600, 120, 400, 10}, {650, 420, 400, 10}
-    };
-
+    // variaveis controle do jogo
     int pontuacao = 0;
     int tempo_spawn_capanga = 0;
     bool jogo_rodando = true;
-
-    // Cores
-    ALLEGRO_COLOR cor_jogador = al_map_rgb(0, 0, 0);
-    ALLEGRO_COLOR cor_tiro_jogador = al_map_rgb(255, 255, 0);
-    ALLEGRO_COLOR cor_boss = al_map_rgb(150, 0, 150);
-    ALLEGRO_COLOR cor_tiro_boss = al_map_rgb(255, 100, 100);
-    ALLEGRO_COLOR cor_capanga = al_map_rgb(50, 150, 50);
-    ALLEGRO_COLOR cor_tiro_capanga = al_map_rgb(150, 255, 150);
-
-    al_register_event_source(queue, al_get_display_event_source(display));
-    al_register_event_source(queue, al_get_timer_event_source(timer));
-    al_register_event_source(queue, al_get_keyboard_event_source());
-
-    al_start_timer(timer);
-
     bool sair = false;
     bool redesenhar = true;
+    bool reiniciar = false;
 
-    while (!sair && jogo_rodando) {
+    // registra eventos
+    al_register_event_source(queue, al_get_display_event_source(display_main));
+    al_register_event_source(queue, al_get_timer_event_source(timer));
+    al_register_event_source(queue, al_get_keyboard_event_source());
+    al_start_timer(timer);
+
+    // loop principal
+    while (!sair) {
         ALLEGRO_EVENT evento;
         al_wait_for_event(queue, &evento);
 
@@ -1403,64 +1514,102 @@ int executar_boss_final(ALLEGRO_DISPLAY* display_main) {
         else if (evento.type == ALLEGRO_EVENT_KEY_DOWN && evento.keyboard.keycode == ALLEGRO_KEY_ESCAPE) {
             sair = true;
         }
-        else if (evento.type == ALLEGRO_EVENT_TIMER) {
-            // ATUALIZAÇÃO DO JOGADOR
+        else if (evento.type == ALLEGRO_EVENT_KEY_DOWN && evento.keyboard.keycode == ALLEGRO_KEY_R && jogador_morto) {
+            reiniciar = true;
+            sair = true;
+        }
+        else if (evento.type == ALLEGRO_EVENT_TIMER && jogo_rodando) {
+            float delta = 1.0f / FPS_BOSS;
+
+            // atualiza movimento Aline
             jogador.x += jogador.vel_x;
             if (jogador.x < 0) jogador.x = 0;
-            if (jogador.x > LARGURA_TELA_BOSS - jogador.largura) jogador.x = LARGURA_TELA_BOSS - jogador.largura;
-            atualizar_fisica_entidade_boss(&jogador.x, &jogador.y, &jogador.vel_y, jogador.largura, jogador.altura, &jogador.no_chao, jogador.abaixado, plataformas);
+            if (jogador.x > LARGURA_TELA_BOSS - jogador.largura)
+                jogador.x = LARGURA_TELA_BOSS - jogador.largura;
 
-            // ATUALIZAÇÃO DO BOSS
-            if (boss.ativo) {
-                if (boss.vida <= boss.vida_maxima / 2 && !boss.segunda_fase) {
-                    boss.segunda_fase = true;
+            atualizar_fisica_entidade_boss(&jogador.x, &jogador.y, &jogador.vel_y,
+                                          jogador.largura, jogador.altura, &jogador.no_chao,
+                                          jogador.descendo_plataforma, plataformas);
+
+            // atualiza animacoes Aline
+            if (!jogador.no_chao && !jogador_morrendo) {
+                tempo_frame_pulo += delta;
+                if (tempo_frame_pulo >= 0.08f) {
+                    tempo_frame_pulo = 0;
+                    if (frame_pulo < MAX_SPRITES_PULO_BOSS - 1) frame_pulo++;
                 }
+            } else {
+                frame_pulo = 0;
+                tempo_frame_pulo = 0;
+            }
+
+            if (jogador.no_chao && jogador.vel_x != 0 && !jogador_morrendo) {
+                tempo_frame_corrida += delta;
+                if (tempo_frame_corrida >= 0.08f) {
+                    tempo_frame_corrida = 0;
+                    frame_corrida = (frame_corrida + 1) % MAX_SPRITES_CORRIDA_BOSS;
+                }
+            } else {
+                frame_corrida = 0;
+                tempo_frame_corrida = 0;
+            }
+
+            if (jogador_morrendo) {
+                tempo_frame_morte += delta;
+                if (tempo_frame_morte >= 0.1f) {
+                    tempo_frame_morte = 0;
+                    if (frame_morte < MAX_SPRITES_MORTE_BOSS - 1) {
+                        frame_morte++;
+                    } else {
+                        // Animação de morte terminou
+                        jogador_morto = true;
+                        jogo_rodando = false;
+                    }
+                }
+            }
+
+            // atualiza boss
+            if (boss.ativo) {
+                if (boss.vida <= boss.vida_maxima / 2)
+                    boss.segunda_fase = true;
 
                 boss.tempo_tiro++;
-                if (boss.tempo_tiro >= (boss.segunda_fase ? 30 : 60)) {
-                    float centro_boss_x = boss.x + boss.largura / 2.0f;
-                    float centro_boss_y = boss.y + boss.altura / 2.0f;
-                    float centro_jogador_x = jogador.x + jogador.largura / 2.0f;
-                    float centro_jogador_y = jogador.y + jogador.altura / 2.0f;
+                int intervalo = boss.segunda_fase ? 20 : 30;
 
-                    criar_tiros_direcionados_boss(tiros_boss, MAX_TIROS_BOSS_FINAL, centro_boss_x, centro_boss_y, centro_jogador_x, centro_jogador_y, 4.0f);
-                    if (boss.segunda_fase) {
-                        criar_tiros_direcionados_boss(tiros_boss, MAX_TIROS_BOSS_FINAL, centro_boss_x, centro_boss_y, centro_jogador_x, centro_jogador_y, 4.0f);
-                    }
+                if (boss.tempo_tiro >= intervalo) {
+                    float boss_centro_x = boss.x + boss.largura / 2;
+                    float boss_centro_y = boss.y + boss.altura / 2;
+                    float jogador_centro_x = jogador.x + jogador.largura / 2;
+                    float jogador_centro_y = jogador.y + jogador.altura / 2;
+
+                    // O Boss atira APENAS UMA VEZ
+                    criar_tiros_direcionados_boss(tiros_boss, MAX_TIROS_BOSS_FINAL,
+                                                 boss_centro_x, boss_centro_y,
+                                                 jogador_centro_x, jogador_centro_y, VELOCIDADE_TIRO_BOSS_FINAL);
+
+                    // REMOVIDO: O if (boss.segunda_fase) que causava o tiro duplicado.
+
                     boss.tempo_tiro = 0;
                 }
             }
 
-            // ATUALIZAÇÃO DOS CAPANGAS
-            if (boss.ativo && boss.vida <= boss.vida_maxima / 2) {
+            // spawn capangas
+            if (boss.ativo && boss.vida <= boss.vida_maxima * 0.75) { //aparecem quando o boss esta com 75% da vida
                 tempo_spawn_capanga++;
-                if (tempo_spawn_capanga > FPS_BOSS * 4) {
+                if (tempo_spawn_capanga > FPS_BOSS * 3.5) { // Spawn / segundos
                     for (int i = 0; i < MAX_CAPANGAS_BOSS; i++) {
                         if (!capangas[i].ativo) {
-                            if ((rand() % 2 == 0)) {
-                                capangas[i].x = 25.0f;
-                                capangas[i].y = 25;
-                                capangas[i].largura = 25;
-                                capangas[i].altura = 35;
-                                capangas[i].vida = VIDA_CAPANGA_BOSS;
-                                capangas[i].ativo = true;
-                                capangas[i].tempo_tiro = rand() % 100;
-                                capangas[i].vel_x = 0;
-                                capangas[i].vel_y = 0;
-                                capangas[i].no_chao = false;
-                            }
-                            else {
-                                capangas[i].x = LARGURA_TELA_BOSS - 50.0f;
-                                capangas[i].y = 25;
-                                capangas[i].largura = 25;
-                                capangas[i].altura = 35;
-                                capangas[i].vida = VIDA_CAPANGA_BOSS;
-                                capangas[i].ativo = true;
-                                capangas[i].tempo_tiro = rand() % 100;
-                                capangas[i].vel_x = 0;
-                                capangas[i].vel_y = 0;
-                                capangas[i].no_chao = false;
-                            }
+                            capangas[i].x = (rand() % 2 == 0) ? 25.0f : LARGURA_TELA_BOSS - 50.0f;
+                            capangas[i].y = 25;
+                            capangas[i].largura = 50;
+                            capangas[i].altura = 70;
+                            capangas[i].vida = VIDA_CAPANGA_BOSS;
+                            capangas[i].ativo = true;
+                            capangas[i].tempo_tiro = 0;
+                            capangas[i].vel_x = 0;
+                            capangas[i].vel_y = 0;
+                            capangas[i].no_chao = false;
+                            capangas[i].direcao = 1;
                             break;
                         }
                     }
@@ -1468,30 +1617,51 @@ int executar_boss_final(ALLEGRO_DISPLAY* display_main) {
                 }
             }
 
+            // atualiza capangas
             for (int i = 0; i < MAX_CAPANGAS_BOSS; i++) {
                 if (!capangas[i].ativo) continue;
 
                 capangas[i].vel_x = (jogador.x > capangas[i].x) ? VELOCIDADE_CAPANGA_BOSS : -VELOCIDADE_CAPANGA_BOSS;
-                capangas[i].x += capangas[i].vel_x;
-                atualizar_fisica_entidade_boss(&capangas[i].x, &capangas[i].y, &capangas[i].vel_y, capangas[i].largura, capangas[i].altura, &capangas[i].no_chao, false, plataformas);
 
+                // pulo dos capangas
+                if (capangas[i].no_chao && (rand() % (FPS_BOSS * 4) == 0)) {
+                    capangas[i].vel_y = -12.0f;
+                    capangas[i].no_chao = false;
+                }
+
+                // atualizar a opsicao dos capangas
+                capangas[i].x += capangas[i].vel_x;
+
+                // muda direção dos capangas
+                if (capangas[i].vel_x > 0) {
+                    capangas[i].direcao = 1;  // direita
+                } else if (capangas[i].vel_x < 0) {
+                    capangas[i].direcao = -1;  // esquerda
+                }
+
+                atualizar_fisica_entidade_boss(&capangas[i].x, &capangas[i].y, &capangas[i].vel_y,
+                                              capangas[i].largura, capangas[i].altura,
+                                              &capangas[i].no_chao, false, plataformas);
+
+                // tiro dos capangas
                 capangas[i].tempo_tiro++;
-                if (capangas[i].tempo_tiro > FPS_BOSS * 2) {
+                if (capangas[i].tempo_tiro > FPS_BOSS * 0.8) {
                     criar_tiros_direcionados_boss(tiros_capangas, MAX_TIROS_CAPANGA_BOSS,
-                        capangas[i].x + capangas[i].largura / 2.0f,
-                        capangas[i].y + capangas[i].altura / 2.0f,
-                        jogador.x + jogador.largura / 2.0f,
-                        jogador.y + jogador.altura / 2.0f, 3.0f);
+                                                 capangas[i].x + capangas[i].largura / 2,
+                                                 capangas[i].y + capangas[i].altura / 2,
+                                                 jogador.x + jogador.largura / 2,
+                                                 jogador.y + jogador.altura / 2, VELOCIDADE_TIRO_CAPANGA); // USA A NOVA CONSTANTE
                     capangas[i].tempo_tiro = 0;
                 }
             }
 
-            // ATUALIZAÇÃO DOS TIROS
+            // atualiza tiros
             for (int i = 0; i < MAX_TIROS_JOGADOR_BOSS; i++) {
                 if (!tiros_jogador[i].ativo) continue;
                 tiros_jogador[i].x += tiros_jogador[i].vel_x;
                 tiros_jogador[i].y += tiros_jogador[i].vel_y;
-                if (tiros_jogador[i].x < 0 || tiros_jogador[i].x > LARGURA_TELA_BOSS || tiros_jogador[i].y < 0 || tiros_jogador[i].y > ALTURA_TELA_BOSS) {
+                if (tiros_jogador[i].x < 0 || tiros_jogador[i].x > LARGURA_TELA_BOSS ||
+                    tiros_jogador[i].y < 0 || tiros_jogador[i].y > ALTURA_TELA_BOSS) {
                     tiros_jogador[i].ativo = false;
                 }
             }
@@ -1500,7 +1670,8 @@ int executar_boss_final(ALLEGRO_DISPLAY* display_main) {
                 if (!tiros_boss[i].ativo) continue;
                 tiros_boss[i].x += tiros_boss[i].vel_x;
                 tiros_boss[i].y += tiros_boss[i].vel_y;
-                if (tiros_boss[i].x < 0 || tiros_boss[i].x > LARGURA_TELA_BOSS || tiros_boss[i].y < 0 || tiros_boss[i].y > ALTURA_TELA_BOSS) {
+                if (tiros_boss[i].x < 0 || tiros_boss[i].x > LARGURA_TELA_BOSS ||
+                    tiros_boss[i].y < 0 || tiros_boss[i].y > ALTURA_TELA_BOSS) {
                     tiros_boss[i].ativo = false;
                 }
             }
@@ -1509,17 +1680,18 @@ int executar_boss_final(ALLEGRO_DISPLAY* display_main) {
                 if (!tiros_capangas[i].ativo) continue;
                 tiros_capangas[i].x += tiros_capangas[i].vel_x;
                 tiros_capangas[i].y += tiros_capangas[i].vel_y;
-                if (tiros_capangas[i].x < 0 || tiros_capangas[i].x > LARGURA_TELA_BOSS || tiros_capangas[i].y < 0 || tiros_capangas[i].y > ALTURA_TELA_BOSS) {
+                if (tiros_capangas[i].x < 0 || tiros_capangas[i].x > LARGURA_TELA_BOSS ||
+                    tiros_capangas[i].y < 0 || tiros_capangas[i].y > ALTURA_TELA_BOSS) {
                     tiros_capangas[i].ativo = false;
                 }
             }
 
-            // VERIFICAÇÃO DE COLISÕES
+            // verifica colisoes dos tiros da Aline
             for (int i = 0; i < MAX_TIROS_JOGADOR_BOSS; i++) {
                 if (!tiros_jogador[i].ativo) continue;
 
-                // Colisão com boss
-                if (boss.ativo && colidiu_boss(tiros_jogador[i].x, tiros_jogador[i].y, 4, 2, boss.x, boss.y, boss.largura, boss.altura)) {
+                if (boss.ativo && colidiu_boss(tiros_jogador[i].x, tiros_jogador[i].y, 4, 2,
+                                              boss.x, boss.y, boss.largura, boss.altura)) {
                     tiros_jogador[i].ativo = false;
                     boss.vida -= 2;
                     pontuacao += 10;
@@ -1529,9 +1701,10 @@ int executar_boss_final(ALLEGRO_DISPLAY* display_main) {
                     }
                 }
 
-                // Colisão com capangas
                 for (int j = 0; j < MAX_CAPANGAS_BOSS; j++) {
-                    if (capangas[j].ativo && colidiu_boss(tiros_jogador[i].x, tiros_jogador[i].y, 4, 2, capangas[j].x, capangas[j].y, capangas[j].largura, capangas[j].altura)) {
+                    if (capangas[j].ativo && colidiu_boss(tiros_jogador[i].x, tiros_jogador[i].y, 4, 2,
+                                                         capangas[j].x, capangas[j].y,
+                                                         capangas[j].largura, capangas[j].altura)) {
                         tiros_jogador[i].ativo = false;
                         capangas[j].vida -= 20;
                         pontuacao += 5;
@@ -1544,213 +1717,267 @@ int executar_boss_final(ALLEGRO_DISPLAY* display_main) {
                 }
             }
 
-            // Colisão tiros do boss com jogador
+            // verifica colisoes tiros inimigos com Aline
             for (int i = 0; i < MAX_TIROS_BOSS_FINAL; i++) {
-                if (tiros_boss[i].ativo && colidiu_boss(tiros_boss[i].x, tiros_boss[i].y, 6, 6, jogador.x, jogador.y, jogador.largura, jogador.altura)) {
+                if (tiros_boss[i].ativo && colidiu_boss(tiros_boss[i].x, tiros_boss[i].y, 6, 6,
+                                                       jogador.x, jogador.y, jogador.largura, jogador.altura)) {
                     tiros_boss[i].ativo = false;
                     jogador.vida -= 15;
-                    if (jogador.vida <= 0) {
-                        // Reset do jogo se jogador morrer
-                        jogador.x = 100;
-                        jogador.y = ALTURA_TELA_BOSS - 125;
-                        jogador.largura = 40;
-                        jogador.altura = 60;
-                        jogador.no_chao = true;
-                        jogador.abaixado = false;
-                        jogador.direcao = 1;
-                        jogador.vida = 100;
-                        jogador.vel_x = 0;
-                        jogador.vel_y = 0;
+                    if (jogador.vida <= 0 && !jogador_morrendo) {
+                        jogador_morrendo = true;
+                        frame_morte = 0;
+                        tempo_frame_morte = 0;
+                        if (instancia_musica) al_stop_sample_instance(instancia_musica);
                     }
                 }
             }
 
-            // Colisão tiros dos capangas com jogador
             for (int i = 0; i < MAX_TIROS_CAPANGA_BOSS; i++) {
-                if (tiros_capangas[i].ativo && colidiu_boss(tiros_capangas[i].x, tiros_capangas[i].y, 5, 5, jogador.x, jogador.y, jogador.largura, jogador.altura)) {
+                if (tiros_capangas[i].ativo && colidiu_boss(tiros_capangas[i].x, tiros_capangas[i].y, 5, 5,
+                                                           jogador.x, jogador.y, jogador.largura, jogador.altura)) {
                     tiros_capangas[i].ativo = false;
                     jogador.vida -= 5;
-                    if (jogador.vida <= 0) {
-                        jogador.x = 100;
-                        jogador.y = ALTURA_TELA_BOSS - 125;
-                        jogador.largura = 40;
-                        jogador.altura = 60;
-                        jogador.no_chao = true;
-                        jogador.abaixado = false;
-                        jogador.direcao = 1;
-                        jogador.vida = 100;
-                        jogador.vel_x = 0;
-                        jogador.vel_y = 0;
+                    if (jogador.vida <= 0 && !jogador_morrendo) {
+                        jogador_morrendo = true;
+                        frame_morte = 0;
+                        tempo_frame_morte = 0;
+                        if (instancia_musica) al_stop_sample_instance(instancia_musica);
                     }
                 }
             }
 
-            // Colisão jogador com boss
-            if (boss.ativo && colidiu_boss(jogador.x, jogador.y, jogador.largura, jogador.altura, boss.x, boss.y, boss.largura, boss.altura)) {
-                jogador.vida = 0;
-                jogador.x = 100;
-                jogador.y = ALTURA_TELA_BOSS - 125;
-                jogador.largura = 40;
-                jogador.altura = 60;
-                jogador.no_chao = true;
-                jogador.abaixado = false;
-                jogador.direcao = 1;
-                jogador.vida = 100;
-                jogador.vel_x = 0;
-                jogador.vel_y = 0;
+            // verifica colisoes com boss
+            if (boss.ativo && colidiu_boss(jogador.x, jogador.y, jogador.largura, jogador.altura,
+                                          boss.x, boss.y, boss.largura, boss.altura)) {
+                if (!jogador_morrendo) {
+                    jogador.vida = 0;
+                    jogador_morrendo = true;
+                    frame_morte = 0;
+                    tempo_frame_morte = 0;
+                    if (instancia_musica) al_stop_sample_instance(instancia_musica);
+                }
             }
 
-            // VERIFICA SE O BOSS FOI DERROTADO
-            if (!boss.ativo) {
-                jogo_rodando = false;
-            }
+            // se boss foi derrotado
+            if (!boss.ativo) jogo_rodando = false;
 
             redesenhar = true;
         }
         else if (evento.type == ALLEGRO_EVENT_KEY_DOWN) {
-            // Controles do jogador
-            if (evento.keyboard.keycode == ALLEGRO_KEY_SPACE) {
+            if (evento.keyboard.keycode == ALLEGRO_KEY_SPACE && !jogador_morrendo && jogo_rodando) {
                 criar_tiro_boss(tiros_jogador, MAX_TIROS_JOGADOR_BOSS,
-                    jogador.x + (jogador.direcao == 1 ? jogador.largura : 0),
-                    jogador.y + jogador.altura / 2,
-                    jogador.direcao * 6.0f, 0);
+                              jogador.x + (jogador.direcao == 1 ? jogador.largura : 0),
+                              jogador.y + jogador.altura / 2,
+                              jogador.direcao * 6.0f, 0);
             }
         }
 
-        // Processa movimento contínuo
-        ALLEGRO_KEYBOARD_STATE kb;
-        al_get_keyboard_state(&kb);
-        jogador.vel_x = (al_key_down(&kb, ALLEGRO_KEY_D) - al_key_down(&kb, ALLEGRO_KEY_A)) * VELOCIDADE_MOVIMENTO_BOSS;
-        if (jogador.vel_x != 0) jogador.direcao = (jogador.vel_x > 0) ? 1 : -1;
-        if (al_key_down(&kb, ALLEGRO_KEY_W) && jogador.no_chao) {
-            jogador.vel_y = FORCA_PULO_BOSS;
-            jogador.no_chao = false;
-        }
-        jogador.abaixado = al_key_down(&kb, ALLEGRO_KEY_S);
+        // movimento continuo do jogador
+        if (!jogador_morrendo && jogo_rodando) {
+            ALLEGRO_KEYBOARD_STATE kb;
+            al_get_keyboard_state(&kb);
 
+            jogador.vel_x = (al_key_down(&kb, ALLEGRO_KEY_D) - al_key_down(&kb, ALLEGRO_KEY_A)) * VELOCIDADE_MOVIMENTO_BOSS;
+            if (jogador.vel_x != 0)
+                jogador.direcao = (jogador.vel_x > 0) ? 1 : -1;
+
+            if (al_key_down(&kb, ALLEGRO_KEY_W) && jogador.no_chao) {
+                jogador.vel_y = FORCA_PULO_BOSS;
+                jogador.no_chao = false;
+            }
+
+            // descer da plataforma
+            jogador.descendo_plataforma = al_key_down(&kb, ALLEGRO_KEY_S);
+        }
+
+        // desenho
         if (redesenhar && al_is_event_queue_empty(queue)) {
             redesenhar = false;
 
-            // DESENHO DO JOGO
+            // imagem do fundo
             if (background_image) {
-                al_draw_scaled_bitmap(background_image,
-                    0, 0, al_get_bitmap_width(background_image), al_get_bitmap_height(background_image),
-                    0, 0, LARGURA_TELA_BOSS, ALTURA_TELA_BOSS, 0);
-            }
-            else {
-                // Fundo alternativo se não carregar a imagem
+                al_draw_scaled_bitmap(background_image, 0, 0,
+                                    al_get_bitmap_width(background_image),
+                                    al_get_bitmap_height(background_image),
+                                    0, 0, LARGURA_TELA_BOSS, ALTURA_TELA_BOSS, 0);
+            } else {
                 al_clear_to_color(al_map_rgb(20, 20, 40));
             }
 
-            // Desenha chão principal
+            // desenho do chao
+            float chao_y = ALTURA_TELA_BOSS - 50;
             if (platform_block_image) {
-                float chao_y_pos = ALTURA_TELA_BOSS - 50;
-                int num_blocos_chao = LARGURA_TELA_BOSS / TAMANHO_BLOCO_PLATAFORMA_BOSS;
-                if (LARGURA_TELA_BOSS % TAMANHO_BLOCO_PLATAFORMA_BOSS != 0) num_blocos_chao++;
+                int num_blocos = (LARGURA_TELA_BOSS / TAMANHO_BLOCO_PLATAFORMA_BOSS) + 1;
+                for (int i = 0; i < num_blocos; i++) {
+                    al_draw_scaled_bitmap(platform_block_image, 0, 0,
+                                        al_get_bitmap_width(platform_block_image),
+                                        al_get_bitmap_height(platform_block_image),
+                                        i * TAMANHO_BLOCO_PLATAFORMA_BOSS, chao_y,
+                                        TAMANHO_BLOCO_PLATAFORMA_BOSS, 50, 0);
+                }
+            } else {
+                al_draw_filled_rectangle(0, chao_y, LARGURA_TELA_BOSS, ALTURA_TELA_BOSS, al_map_rgb(80, 60, 30));
+            }
 
-                for (int i = 0; i < num_blocos_chao; i++) {
-                    al_draw_scaled_bitmap(platform_block_image,
-                        0, 0, al_get_bitmap_width(platform_block_image), al_get_bitmap_height(platform_block_image),
-                        i * TAMANHO_BLOCO_PLATAFORMA_BOSS, chao_y_pos,
-                        TAMANHO_BLOCO_PLATAFORMA_BOSS, 50, 0);
+            // imagem do jogo do mario nas plataformas hihi
+            for (int i = 0; i < MAX_PLATAFORMAS_BOSS; i++) {
+                if (platform_block_image) {
+                    int num_blocos = (plataformas[i].largura / TAMANHO_BLOCO_PLATAFORMA_BOSS) + 1;
+                    for (int j = 0; j < num_blocos; j++) {
+                        al_draw_scaled_bitmap(platform_block_image, 0, 0,
+                                            al_get_bitmap_width(platform_block_image),
+                                            al_get_bitmap_height(platform_block_image),
+                                            plataformas[i].x + (j * TAMANHO_BLOCO_PLATAFORMA_BOSS),
+                                            plataformas[i].y,
+                                            TAMANHO_BLOCO_PLATAFORMA_BOSS, plataformas[i].altura, 0);
+                    }
+                } else {
+                    al_draw_filled_rectangle(plataformas[i].x, plataformas[i].y,
+                                           plataformas[i].x + plataformas[i].largura,
+                                           plataformas[i].y + plataformas[i].altura,
+                                           al_map_rgb(100, 100, 100));
                 }
             }
-            else {
-                // Chão alternativo
-                al_draw_filled_rectangle(0, ALTURA_TELA_BOSS - 50, LARGURA_TELA_BOSS, ALTURA_TELA_BOSS, al_map_rgb(80, 60, 30));
+
+            // desenha Aline
+            ALLEGRO_BITMAP* sprite_atual = NULL;
+
+            if (jogador_morrendo && sprites_morte[0]) {
+                sprite_atual = sprites_morte[frame_morte];
+            } else if (!jogador.no_chao && sprites_pulo[0]) {
+                sprite_atual = sprites_pulo[frame_pulo];
+            } else if (jogador.vel_x != 0 && sprites_corrida[0]) {
+                sprite_atual = sprites_corrida[frame_corrida];
+            } else if (sprite_parado) {
+                sprite_atual = sprite_parado;
             }
 
-            // Desenha plataformas
-            if (platform_block_image) {
-                for (int i = 0; i < MAX_PLATAFORMAS_BOSS; i++) {
-                    int num_blocos_plataforma = plataformas[i].largura / TAMANHO_BLOCO_PLATAFORMA_BOSS;
-                    if (plataformas[i].largura % TAMANHO_BLOCO_PLATAFORMA_BOSS != 0) num_blocos_plataforma++;
+            if (sprite_atual) {
+                if (jogador.direcao == 1) {
+                    al_draw_scaled_bitmap(sprite_atual, 0, 0,
+                                        al_get_bitmap_width(sprite_atual),
+                                        al_get_bitmap_height(sprite_atual),
+                                        jogador.x, jogador.y, jogador.largura, jogador.altura, 0);
+                } else {
+                    al_draw_scaled_bitmap(sprite_atual, 0, 0,
+                                        al_get_bitmap_width(sprite_atual),
+                                        al_get_bitmap_height(sprite_atual),
+                                        jogador.x + jogador.largura, jogador.y,
+                                        -jogador.largura, jogador.altura, 0);
+                }
+            }
 
-                    for (int j = 0; j < num_blocos_plataforma; j++) {
-                        al_draw_scaled_bitmap(platform_block_image,
-                            0, 0, al_get_bitmap_width(platform_block_image), al_get_bitmap_height(platform_block_image),
-                            plataformas[i].x + (j * TAMANHO_BLOCO_PLATAFORMA_BOSS), plataformas[i].y,
-                            TAMANHO_BLOCO_PLATAFORMA_BOSS, plataformas[i].altura, 0);
+            // desenha o boss
+            if (boss.ativo) {
+                if (boss_image) {
+                    al_draw_scaled_bitmap(boss_image, 0, 0,
+                                        al_get_bitmap_width(boss_image),
+                                        al_get_bitmap_height(boss_image),
+                                        boss.x, boss.y, boss.largura, boss.altura, 0);
+                }
+
+                // barra da vida do boss
+                float vida_percentual = (float)boss.vida / boss.vida_maxima;
+                al_draw_filled_rectangle(boss.x, boss.y - 15, boss.x + boss.largura,
+                                       boss.y - 5, al_map_rgb(100, 0, 0));
+                al_draw_filled_rectangle(boss.x, boss.y - 15, boss.x + boss.largura * vida_percentual,
+                                       boss.y - 5, al_map_rgb(255, 0, 0));
+            }
+
+            // desenha os capangas
+            for (int i = 0; i < MAX_CAPANGAS_BOSS; i++) {
+                if (capangas[i].ativo) {
+                    if (capanga_image) {
+                        int flags = 0;
+
+                        // inversao da direcao
+                        if (capangas[i].direcao == 1) {
+                            flags = ALLEGRO_FLIP_HORIZONTAL;
+                        }
+
+                        al_draw_scaled_bitmap(capanga_image, 0, 0,
+                                              al_get_bitmap_width(capanga_image),
+                                              al_get_bitmap_height(capanga_image),
+                                              capangas[i].x, capangas[i].y,
+                                              capangas[i].largura, capangas[i].altura, flags);
                     }
                 }
             }
-            else {
-                // Plataformas alternativas
-                for (int i = 0; i < MAX_PLATAFORMAS_BOSS; i++) {
-                    al_draw_filled_rectangle(plataformas[i].x, plataformas[i].y,
-                        plataformas[i].x + plataformas[i].largura,
-                        plataformas[i].y + plataformas[i].altura,
-                        al_map_rgb(100, 100, 100));
-                }
-            }
 
-            // Desenha jogador
-            float altura_desenhada = jogador.abaixado ? jogador.altura / 2.0f : jogador.altura;
-            al_draw_filled_rectangle(jogador.x, jogador.y + (jogador.abaixado ? altura_desenhada : 0),
-                jogador.x + jogador.largura, jogador.y + jogador.altura, cor_jogador);
-
-            // Desenha boss
-            if (boss.ativo) {
-                al_draw_filled_rectangle(boss.x, boss.y, boss.x + boss.largura, boss.y + boss.altura, cor_boss);
-                float vida_pc = (float)boss.vida / boss.vida_maxima;
-                al_draw_filled_rectangle(boss.x, boss.y - 15, boss.x + boss.largura, boss.y - 5, al_map_rgb(100, 0, 0));
-                al_draw_filled_rectangle(boss.x, boss.y - 15, boss.x + boss.largura * vida_pc, boss.y - 5, al_map_rgb(255, 0, 0));
-            }
-
-            // Desenha capangas
-            for (int i = 0; i < MAX_CAPANGAS_BOSS; i++) {
-                if (capangas[i].ativo) {
-                    al_draw_filled_rectangle(capangas[i].x, capangas[i].y,
-                        capangas[i].x + capangas[i].largura,
-                        capangas[i].y + capangas[i].altura, cor_capanga);
-                }
-            }
-
-            // Desenha tiros
+            // desenha tiros do jogador
             for (int i = 0; i < MAX_TIROS_JOGADOR_BOSS; i++) {
                 if (tiros_jogador[i].ativo) {
-                    al_draw_filled_circle(tiros_jogador[i].x, tiros_jogador[i].y, 2, cor_tiro_jogador);
+                    al_draw_filled_circle(tiros_jogador[i].x, tiros_jogador[i].y, 2,
+                                        al_map_rgb(255, 255, 0));
                 }
             }
+
+            // desenha tiros do boss
             for (int i = 0; i < MAX_TIROS_BOSS_FINAL; i++) {
                 if (tiros_boss[i].ativo) {
-                    al_draw_filled_circle(tiros_boss[i].x, tiros_boss[i].y, 3, cor_tiro_boss);
+                    al_draw_filled_circle(tiros_boss[i].x, tiros_boss[i].y, 3,
+                                        al_map_rgb(255, 100, 100));
                 }
             }
+
+            // desenha tiros dos capangas
             for (int i = 0; i < MAX_TIROS_CAPANGA_BOSS; i++) {
                 if (tiros_capangas[i].ativo) {
-                    al_draw_filled_circle(tiros_capangas[i].x, tiros_capangas[i].y, 3, cor_tiro_capanga);
+                    al_draw_filled_circle(tiros_capangas[i].x, tiros_capangas[i].y, 3,
+                                        al_map_rgb(150, 255, 150));
                 }
             }
 
-            // Desenha HUD - CORRIGIDO SEM SPRINTF_S
-            char buffer[100];
-            printf(buffer, "VIDA: %d", jogador.vida);
-            al_draw_text(font, al_map_rgb(255, 255, 255), 20, 20, 0, buffer);
-            printf(buffer, "PONTOS: %d", pontuacao);
-            al_draw_text(font, al_map_rgb(255, 255, 255), 20, 50, 0, buffer);
+            // COLETA DE DADOS DO HUD E CHAMADA DA FUNÇÃO AUXILIAR
+            DadosHUD dados_atuais = {
+                .vida_jogador = jogador.vida,
+                .pontuacao = pontuacao,
+                .boss_vida_atual = boss.vida,
+                .boss_vida_max = boss.vida_maxima,
+                .boss_ativo = boss.ativo,
+                .jogador_morto = jogador_morto
+            };
+            desenhar_hud(font, dados_atuais);
 
-            if (boss.ativo) {
-                printf(buffer, "BOSS: %d/%d", boss.vida, boss.vida_maxima);
-                al_draw_text(font, al_map_rgb(255, 255, 255), LARGURA_TELA_BOSS - 150, 20, ALLEGRO_ALIGN_RIGHT, buffer);
-            }
-            else {
-                al_draw_text(font, al_map_rgb(255, 255, 0), LARGURA_TELA_BOSS / 2, ALTURA_TELA_BOSS / 2,
-                    ALLEGRO_ALIGN_CENTER, "VILÃO DERROTADO!");
-            }
 
             al_flip_display();
         }
     }
 
-    // LIMPEZA
+
+    // para a música antes de limpar
+    if (instancia_musica) {
+        al_stop_sample_instance(instancia_musica);
+        al_destroy_sample_instance(instancia_musica);
+    }
+    if (musica_fundo) {
+        al_destroy_sample(musica_fundo);
+    }
     if (background_image) al_destroy_bitmap(background_image);
     if (platform_block_image) al_destroy_bitmap(platform_block_image);
-    if (font) al_destroy_font(font);
+    if (sprite_parado) al_destroy_bitmap(sprite_parado);
+    if (boss_image) al_destroy_bitmap(boss_image);
+    if (capanga_image) al_destroy_bitmap(capanga_image);
+
+    for (int i = 0; i < MAX_SPRITES_PULO_BOSS; i++) {
+        if (sprites_pulo[i]) al_destroy_bitmap(sprites_pulo[i]);
+    }
+    for (int i = 0; i < MAX_SPRITES_CORRIDA_BOSS; i++) {
+        if (sprites_corrida[i]) al_destroy_bitmap(sprites_corrida[i]);
+    }
+    for (int i = 0; i < MAX_SPRITES_MORTE_BOSS; i++) {
+        if (sprites_morte[i]) al_destroy_bitmap(sprites_morte[i]);
+    }
+
+    al_destroy_font(font);
     al_destroy_timer(timer);
     al_destroy_event_queue(queue);
 
-    // Retorna 1 se o boss foi derrotado, 0 se o jogador saiu
+    // se r foi pressionado, chama a funcao recursivamente
+    if (reiniciar) {
+        return executar_boss_final(display_main);
+    }
+
     return (boss.ativo == false) ? 1 : 0;
 }
 // ----------------------- Tela de Vitória -----------------------
@@ -2011,8 +2238,6 @@ bool carregar_sprites_lobby() {
         }
     }
 
-    al_init_font_addon();
-    al_init_ttf_addon();
     font = al_create_builtin_font();
 
     return true;
@@ -2024,12 +2249,34 @@ int main(void) {
         fprintf(stderr, "Falha ao inicializar Allegro!\n");
         return -1;
     }
-
     al_init_image_addon();
     al_init_primitives_addon();
     al_install_keyboard();
     al_install_mouse();
     al_init_native_dialog_addon();
+
+
+    al_init_font_addon(); //
+    al_init_ttf_addon(); //
+    al_init_image_addon();
+    al_init_primitives_addon();
+    al_install_keyboard();
+    al_install_mouse();
+    al_init_native_dialog_addon();
+
+    if (!al_install_audio()) {
+        fprintf(stderr, "Falha ao inicializar áudio!\n");
+        return -1;
+    }
+    if (!al_init_acodec_addon()) {
+        fprintf(stderr, "Falha ao inicializar acodec!\n");
+        return -1;
+    }
+    // Reserve mais samples! 1 é muito pouco.
+    if (!al_reserve_samples(16)) {
+        fprintf(stderr, "Falha ao reservar samples!\n");
+        return -1;
+    }
 
     ALLEGRO_DISPLAY* display = al_create_display(SCREEN_W, SCREEN_H);
     if (!display) {
