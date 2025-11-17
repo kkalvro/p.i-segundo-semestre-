@@ -57,6 +57,10 @@ ALLEGRO_FONT* font = NULL;
 Porta portas[3];
 int numero_portas = 3;
 
+// Sistema de chaves
+bool chave_quebra_cabeca = false;
+bool chave_memoria = false;
+
 // ----------------------- Estruturas e funções do Quebra-Cabeça -----------------------
 typedef struct {
     ALLEGRO_BITMAP* bmp;
@@ -85,7 +89,6 @@ static void shuffle_positions_outside(Piece* pieces, int total, int piece_w_s, i
 int executar_quebra_cabeca(ALLEGRO_DISPLAY* display_main) {
     srand((unsigned)time(NULL));
 
-    // USA O DISPLAY PRINCIPAL em vez de criar um novo
     ALLEGRO_DISPLAY* display = display_main;
 
     ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();
@@ -98,33 +101,36 @@ int executar_quebra_cabeca(ALLEGRO_DISPLAY* display_main) {
     al_register_event_source(queue, al_get_timer_event_source(timer));
     al_start_timer(timer);
 
-    // Carrega assets do quebra-cabeça
     ALLEGRO_BITMAP* instrucoes_img = al_load_bitmap("assets/instrucoesqdc.jpg");
     ALLEGRO_BITMAP* fundo_puzzle = al_load_bitmap("assets/fundo.jpg");
 
     if (!instrucoes_img) {
-        al_show_native_message_box(display, "Erro", "Não foi possível carregar assets/instrucoes.jpg", NULL, NULL, 0);
-        al_destroy_display(display);
+        al_show_native_message_box(display, "Erro", "Não foi possível carregar assets/instrucoesqdc.jpg", NULL, NULL, 0);
+        al_destroy_timer(timer);
+        al_destroy_event_queue(queue);
+        al_destroy_font(font);
         return 0;
     }
     if (!fundo_puzzle) {
         al_show_native_message_box(display, "Erro", "Não foi possível carregar assets/fundo.jpg", NULL, NULL, 0);
-        al_destroy_display(display);
+        al_destroy_timer(timer);
+        al_destroy_event_queue(queue);
+        al_destroy_font(font);
+        al_destroy_bitmap(instrucoes_img);
         return 0;
     }
 
-    // Tela inicial do quebra-cabeça
     bool started = false;
     while (!started) {
         ALLEGRO_EVENT ev;
         al_wait_for_event(queue, &ev);
 
         if (ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
-            al_destroy_display(display);
             al_destroy_timer(timer);
             al_destroy_event_queue(queue);
             al_destroy_bitmap(instrucoes_img);
             al_destroy_bitmap(fundo_puzzle);
+            al_destroy_font(font);
             return 0;
         }
         if (ev.type == ALLEGRO_EVENT_KEY_DOWN) {
@@ -145,7 +151,6 @@ int executar_quebra_cabeca(ALLEGRO_DISPLAY* display_main) {
         }
     }
 
-    // Definição das fases do quebra-cabeça
     PhaseDef phases[3] = {
         { "assets/exemplo_arte_1.jpg", 120 },
         { "assets/exemplo_arte_2.jpg", 90 },
@@ -154,7 +159,6 @@ int executar_quebra_cabeca(ALLEGRO_DISPLAY* display_main) {
 
     bool todas_fases_concluidas = false;
 
-    // Loop pelas fases
     for (int phase_idx = 0; phase_idx < 3; ++phase_idx) {
         bool retry_phase = true;
         bool fase_concluida = false;
@@ -170,11 +174,14 @@ int executar_quebra_cabeca(ALLEGRO_DISPLAY* display_main) {
                 char err[256];
                 snprintf(err, sizeof(err), "Falha ao carregar: %s", image_path);
                 al_show_native_message_box(display, "Erro", err, NULL, NULL, 0);
-                al_destroy_display(display);
+                al_destroy_timer(timer);
+                al_destroy_event_queue(queue);
+                al_destroy_bitmap(instrucoes_img);
+                al_destroy_bitmap(fundo_puzzle);
+                al_destroy_font(font);
                 return 0;
             }
 
-            // Configurações do grid 5x5
             const int rows = 5, cols = 5;
             const int total = rows * cols;
             int src_w = al_get_bitmap_width(source);
@@ -182,12 +189,10 @@ int executar_quebra_cabeca(ALLEGRO_DISPLAY* display_main) {
             int piece_w = src_w / cols;
             int piece_h = src_h / rows;
 
-            // Foto de referência
             const int ref_width = 320;
             float ref_scale = (float)ref_width / (float)src_w;
             int ref_height = (int)(src_h * ref_scale + 0.5f);
 
-            // Calcula escala do grid
             float maxGridW = SCREEN_W * 0.50f;
             float maxGridH = SCREEN_H * 0.85f;
             float scaleX = maxGridW / (float)src_w;
@@ -205,12 +210,15 @@ int executar_quebra_cabeca(ALLEGRO_DISPLAY* display_main) {
 
             const int gap = 2;
 
-            // Cria as peças
             Piece* pieces = (Piece*)malloc(sizeof(Piece) * total);
             if (!pieces) {
                 al_show_native_message_box(display, "Erro", "Memória insuficiente", NULL, NULL, 0);
                 al_destroy_bitmap(source);
-                al_destroy_display(display);
+                al_destroy_timer(timer);
+                al_destroy_event_queue(queue);
+                al_destroy_bitmap(instrucoes_img);
+                al_destroy_bitmap(fundo_puzzle);
+                al_destroy_font(font);
                 return 0;
             }
 
@@ -228,7 +236,6 @@ int executar_quebra_cabeca(ALLEGRO_DISPLAY* display_main) {
                 }
             }
 
-            // Embaralha posições
             shuffle_positions_outside(pieces, total, piece_w_s, grid_x, grid_y, grid_total_h);
 
             int grabbed = -1;
@@ -293,47 +300,39 @@ int executar_quebra_cabeca(ALLEGRO_DISPLAY* display_main) {
                         if (elapsed_time >= TIME_LIMIT) victory_flag = 2;
                     }
 
-                    // Desenha cena do quebra-cabeça
                     al_draw_scaled_bitmap(fundo_puzzle, 0, 0,
                         al_get_bitmap_width(fundo_puzzle), al_get_bitmap_height(fundo_puzzle),
                         0, 0, SCREEN_W, SCREEN_H, 0);
 
-                    // Desenha grid
                     for (int i = 0; i < total; i++)
                         al_draw_rectangle(pieces[i].target_x - 1, pieces[i].target_y - 1,
                             pieces[i].target_x + piece_w_s + 1, pieces[i].target_y + piece_h_s + 1,
                             al_map_rgb(90, 90, 90), 1);
 
-                    // Desenha peças colocadas
                     for (int i = 0; i < total; i++)
                         if (pieces[i].placed)
                             al_draw_scaled_bitmap(pieces[i].bmp, 0, 0, pieces[i].w, pieces[i].h,
                                 pieces[i].target_x, pieces[i].target_y, piece_w_s, piece_h_s, 0);
 
-                    // Desenha peças soltas
                     for (int i = 0; i < total; i++)
                         if (!pieces[i].placed && i != grabbed)
                             al_draw_scaled_bitmap(pieces[i].bmp, 0, 0, pieces[i].w, pieces[i].h,
                                 pieces[i].x, pieces[i].y, piece_w_s, piece_h_s, 0);
 
-                    // Desenha peça sendo arrastada
                     if (grabbed >= 0)
                         al_draw_scaled_bitmap(pieces[grabbed].bmp, 0, 0, pieces[grabbed].w, pieces[grabbed].h,
                             pieces[grabbed].x, pieces[grabbed].y, piece_w_s, piece_h_s, 0);
 
-                    // Desenha imagem de referência
                     float ref_x = (float)(grid_x + grid_total_w + 20);
                     float ref_y = (float)grid_y;
                     al_draw_scaled_bitmap(source, 0, 0, src_w, src_h, (int)ref_x, (int)ref_y, ref_width, ref_height, 0);
 
-                    // Desenha timer
                     char timer_text[64];
                     int remaining = (int)ceilf(TIME_LIMIT - elapsed_time);
                     if (remaining < 0) remaining = 0;
                     snprintf(timer_text, sizeof(timer_text), "Tempo: %02d:%02d", remaining / 60, remaining % 60);
                     al_draw_text(font, al_map_rgb(255, 255, 255), SCREEN_W - 300, 8, 0, timer_text);
 
-                    // Verifica vitória
                     if (!victory_flag) {
                         int all_placed = 1;
                         for (int i = 0; i < total; i++)
@@ -341,7 +340,6 @@ int executar_quebra_cabeca(ALLEGRO_DISPLAY* display_main) {
                         if (all_placed) victory_flag = 1;
                     }
 
-                    // Trata fim de fase
                     if (victory_flag == 1) {
                         al_draw_filled_rectangle(SCREEN_W / 2 - 300, SCREEN_H / 2 - 40, SCREEN_W / 2 + 300, SCREEN_H / 2 + 40, al_map_rgba(0, 0, 0, 180));
                         al_draw_text(font, al_map_rgb(0, 255, 0), SCREEN_W / 2, SCREEN_H / 2 - 6, ALLEGRO_ALIGN_CENTRE, "Fase concluída!");
@@ -364,18 +362,16 @@ int executar_quebra_cabeca(ALLEGRO_DISPLAY* display_main) {
                 }
             }
 
-            // Limpeza da fase
             for (int i = 0; i < total; i++) if (pieces[i].bmp) al_destroy_bitmap(pieces[i].bmp);
             free(pieces);
             al_destroy_bitmap(source);
 
             if (!phase_running && !retry_phase && !fase_concluida) {
-                break; // Usuário saiu do quebra-cabeça
+                break;
             }
         }
 
         if (phase_idx < 2 && fase_concluida) {
-            // Prepara próxima fase
             al_clear_to_color(al_map_rgb(12, 12, 12));
             char tx[128]; snprintf(tx, sizeof(tx), "Preparando fase %d...", phase_idx + 2);
             al_draw_text(font, al_map_rgb(255, 215, 0), SCREEN_W / 2, SCREEN_H / 2, ALLEGRO_ALIGN_CENTRE, tx);
@@ -386,19 +382,23 @@ int executar_quebra_cabeca(ALLEGRO_DISPLAY* display_main) {
 
     if (todas_fases_concluidas) {
         al_clear_to_color(al_map_rgb(12, 12, 12));
-        al_draw_text(font, al_map_rgb(255, 255, 255), SCREEN_W / 2, SCREEN_H / 2, ALLEGRO_ALIGN_CENTRE, "Parabéns! Você concluiu todas as fases!");
+        al_draw_text(font, al_map_rgb(255, 255, 255), SCREEN_W / 2, SCREEN_H / 2 - 30,
+                     ALLEGRO_ALIGN_CENTRE, "Parabéns! Você concluiu todas as fases!");
+        al_draw_text(font, al_map_rgb(255, 215, 0), SCREEN_W / 2, SCREEN_H / 2 + 30,
+                     ALLEGRO_ALIGN_CENTRE, "🔑 Você ganhou uma CHAVE! 🔑");
         al_flip_display();
         al_rest(3.0);
+
+        chave_quebra_cabeca = true;
     }
 
-    // Limpeza final do quebra-cabeça
     al_destroy_bitmap(instrucoes_img);
     al_destroy_bitmap(fundo_puzzle);
     al_destroy_font(font);
     al_destroy_timer(timer);
     al_destroy_event_queue(queue);
 
-    return 1; // Retorna 1 se o quebra-cabeça foi concluído com sucesso
+    return todas_fases_concluidas ? 1 : 0;
 }
 
 // ----------------------- Estruturas e funções do Jogo da Memória -----------------------
@@ -430,7 +430,6 @@ void embaralhar_memoria(int* v, int n) {
 int executar_jogo_memoria(ALLEGRO_DISPLAY* display_main) {
     srand((unsigned)time(NULL));
 
-    // USA O DISPLAY PRINCIPAL
     ALLEGRO_DISPLAY* display = display_main;
 
     ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();
@@ -442,13 +441,14 @@ int executar_jogo_memoria(ALLEGRO_DISPLAY* display_main) {
     al_register_event_source(queue, al_get_timer_event_source(timer));
     al_register_event_source(queue, al_get_keyboard_event_source());
 
-    // Carrega assets do jogo da memória
     ALLEGRO_BITMAP* background_memoria = al_load_bitmap("assets/backgroundjdm.jpg");
     if (!background_memoria) {
         fprintf(stderr, "Erro ao carregar imagem de fundo do jogo da memória\n");
         al_show_native_message_box(display, "Erro", "Arquivo não encontrado",
             "Verifique se assets/backgroundjdm.jpg existe", NULL, ALLEGRO_MESSAGEBOX_ERROR);
-        al_destroy_display(display);
+        al_destroy_font(font);
+        al_destroy_timer(timer);
+        al_destroy_event_queue(queue);
         return 0;
     }
 
@@ -463,7 +463,6 @@ int executar_jogo_memoria(ALLEGRO_DISPLAY* display_main) {
         "assets/img7.jpg"
     };
 
-    // Verifica se as imagens das cartas existem
     for (int i = 0; i < 8; i++) {
         ALLEGRO_BITMAP* test = al_load_bitmap(nomes_imagens[i]);
         if (!test) {
@@ -472,7 +471,10 @@ int executar_jogo_memoria(ALLEGRO_DISPLAY* display_main) {
                 "Arquivo não encontrado: %s\n\nVerifique se o arquivo existe na pasta assets.",
                 nomes_imagens[i]);
             al_show_native_message_box(display, "Erro", "Asset não encontrado", err_msg, NULL, 0);
-            al_destroy_display(display);
+            al_destroy_bitmap(background_memoria);
+            al_destroy_font(font);
+            al_destroy_timer(timer);
+            al_destroy_event_queue(queue);
             return 0;
         }
         al_destroy_bitmap(test);
@@ -481,7 +483,6 @@ int executar_jogo_memoria(ALLEGRO_DISPLAY* display_main) {
     int total_cartas = LINHAS_MEMORIA * COLUNAS_MEMORIA;
     int ids[LINHAS_MEMORIA * COLUNAS_MEMORIA];
 
-    // Preenche os IDs dos pares (agora com 8 imagens únicas, sem duplicação)
     for (int i = 0; i < total_cartas / 2; i++) {
         ids[2 * i] = i;
         ids[2 * i + 1] = i;
@@ -500,7 +501,10 @@ int executar_jogo_memoria(ALLEGRO_DISPLAY* display_main) {
             cartas[i][j].imagem = al_load_bitmap(nomes_imagens[img_index]);
             if (!cartas[i][j].imagem) {
                 fprintf(stderr, "Erro ao carregar imagem %s\n", nomes_imagens[img_index]);
-                al_destroy_display(display);
+                al_destroy_bitmap(background_memoria);
+                al_destroy_font(font);
+                al_destroy_timer(timer);
+                al_destroy_event_queue(queue);
                 return 0;
             }
         }
@@ -517,7 +521,6 @@ int executar_jogo_memoria(ALLEGRO_DISPLAY* display_main) {
 
     al_start_timer(timer);
 
-    // Centralizar tabuleiro
     int area_x = (SCREEN_W - AREA_LARGURA_MEMORIA) / 2;
     int area_y = (SCREEN_H - AREA_ALTURA_MEMORIA) / 2;
 
@@ -574,12 +577,10 @@ int executar_jogo_memoria(ALLEGRO_DISPLAY* display_main) {
             esperando = 0;
         }
 
-        // Desenhar fundo
         al_draw_scaled_bitmap(background_memoria, 0, 0,
             al_get_bitmap_width(background_memoria), al_get_bitmap_height(background_memoria),
             0, 0, SCREEN_W, SCREEN_H, 0);
 
-        // Moldura do tabuleiro
         al_draw_filled_rounded_rectangle(area_x - 15, area_y - 15,
             area_x + AREA_LARGURA_MEMORIA + 15, area_y + AREA_ALTURA_MEMORIA + 15,
             20, 20, al_map_rgb(30, 30, 30));
@@ -588,7 +589,6 @@ int executar_jogo_memoria(ALLEGRO_DISPLAY* display_main) {
             area_x + AREA_LARGURA_MEMORIA + 15, area_y + AREA_ALTURA_MEMORIA + 15,
             20, 20, al_map_rgb(255, 255, 255), 3);
 
-        // Desenha cartas
         for (int i = 0; i < LINHAS_MEMORIA; i++) {
             for (int j = 0; j < COLUNAS_MEMORIA; j++) {
                 int x = area_x + ESPACO_MEMORIA + j * (LARGURA_CARTA + ESPACO_MEMORIA);
@@ -607,19 +607,19 @@ int executar_jogo_memoria(ALLEGRO_DISPLAY* display_main) {
             }
         }
 
-        // Desenha informações
         al_draw_textf(font, al_map_rgb(255, 255, 255),
             SCREEN_W / 2, SCREEN_H - 60, ALLEGRO_ALIGN_CENTER,
             "Pares encontrados: %d / %d", pares_encontrados, total_cartas / 2);
 
-        // Verifica vitória
         if (pares_encontrados == total_cartas / 2) {
-            al_draw_text(font, al_map_rgb(255, 255, 0), SCREEN_W / 2, SCREEN_H - 30,
-                ALLEGRO_ALIGN_CENTER, "Você venceu! Voltando ao lobby...");
+            al_draw_text(font, al_map_rgb(255, 255, 0), SCREEN_W / 2, SCREEN_H - 60,
+                ALLEGRO_ALIGN_CENTER, "🔑 Você ganhou uma CHAVE! 🔑");
+            al_draw_text(font, al_map_rgb(255, 255, 255), SCREEN_W / 2, SCREEN_H - 30,
+                ALLEGRO_ALIGN_CENTER, "Voltando ao lobby...");
 
-            // Espera 3 segundos e volta automaticamente
             if (tempo_vitoria == 0) {
                 tempo_vitoria = al_get_time();
+                chave_memoria = true;
             }
             if (al_get_time() - tempo_vitoria > 3.0) {
                 rodando = 0;
@@ -633,7 +633,6 @@ int executar_jogo_memoria(ALLEGRO_DISPLAY* display_main) {
         al_flip_display();
     }
 
-    // Limpeza
     al_destroy_bitmap(background_memoria);
     for (int i = 0; i < LINHAS_MEMORIA; i++) {
         for (int j = 0; j < COLUNAS_MEMORIA; j++) {
@@ -679,7 +678,6 @@ typedef struct {
     float altura;
 } InimigoColorir;
 
-// ----------------------- Funções auxiliares do Colorir -----------------------
 void atualizar_fisica_jogador_colorir(JogadorColorir* jogador, PlataformaColorir* plataformas) {
     if (!jogador->no_chao)
         jogador->vel_y += GRAVIDADE;
@@ -790,7 +788,6 @@ void atualizar_inimigo_colorir(JogadorColorir* jogador, InimigoColorir* fantasma
     }
 }
 
-// ----------------------- Função Principal do Jogo Colorir -----------------------
 int executar_jogo_colorir(ALLEGRO_DISPLAY* display_main) {
     ALLEGRO_DISPLAY* display = display_main;
     ALLEGRO_TIMER* timer = al_create_timer(1.0 / FPS);
@@ -801,7 +798,6 @@ int executar_jogo_colorir(ALLEGRO_DISPLAY* display_main) {
     al_register_event_source(queue, al_get_keyboard_event_source());
     al_register_event_source(queue, al_get_mouse_event_source());
 
-    // ---------- VARIÁVEIS DO COLORIR ----------
     JogadorColorir jogador_colorir;
     PlataformaColorir plataformas_colorir[NUM_PLATAFORMAS_COLORIR];
     InimigoColorir fantasmas_colorir[MAX_FANTASMAS_COLORIR];
@@ -825,7 +821,6 @@ int executar_jogo_colorir(ALLEGRO_DISPLAY* display_main) {
 
     int plataforma_proximo_balde[MAX_ESTADOS_COLORIR] = { 0, 1, 2, 3, 4, -1 };
 
-    // ---------- INICIALIZAÇÃO DO COLORIR ----------
     jogador_colorir.x = 200;
     jogador_colorir.y = ALTURA_TELA - 200;
     jogador_colorir.vel_x = 0;
@@ -862,7 +857,6 @@ int executar_jogo_colorir(ALLEGRO_DISPLAY* display_main) {
         fantasmas_colorir[i].raio = 75;
     }
 
-    // ---------- CARREGAR IMAGENS DO COLORIR ----------
     const char* arquivos_estados[MAX_ESTADOS_COLORIR] = {
         "assets/estado_zero.png",
         "assets/estado_um.png",
@@ -964,7 +958,6 @@ int executar_jogo_colorir(ALLEGRO_DISPLAY* display_main) {
     bool redesenhar = true;
     int resultado = 0;
 
-    // Variáveis de animação
     int frame_pulo = 0, frame_corrida = 0, frame_morte = 0;
     float tempo_frame_pulo = 0.0f, tempo_frame_corrida = 0.0f, tempo_frame_morte = 0.0f;
     float duracao_frame_pulo = 0.08f, duracao_frame_corrida = 0.08f, duracao_frame_morte = 0.1f;
@@ -983,7 +976,6 @@ int executar_jogo_colorir(ALLEGRO_DISPLAY* display_main) {
             cena_instrucoes = false;
         }
         else if (evento.type == ALLEGRO_EVENT_TIMER && !cena_instrucoes) {
-            // PROCESSAMENTO DO JOGO
             processar_entrada_movimento_colorir(&jogador_colorir, &jogador_travado, &jogador_morrendo,
                 &estado_atual, &balde_pego, &num_fantasmas_colorir,
                 fantasmas_colorir);
@@ -999,10 +991,8 @@ int executar_jogo_colorir(ALLEGRO_DISPLAY* display_main) {
             atualizar_inimigo_colorir(&jogador_colorir, fantasmas_colorir, num_fantasmas_colorir,
                 &jogador_morrendo, jogador_travado, estado_atual);
 
-            // ANIMAÇÕES
             float delta = 1.0 / FPS;
 
-            // Animação de pulo
             if (!jogador_colorir.no_chao && !jogador_morrendo) {
                 tempo_frame_pulo += delta;
                 if (tempo_frame_pulo >= duracao_frame_pulo) {
@@ -1017,7 +1007,6 @@ int executar_jogo_colorir(ALLEGRO_DISPLAY* display_main) {
                 tempo_frame_pulo = 0;
             }
 
-            // Animação de corrida
             if (jogador_colorir.no_chao && jogador_colorir.vel_x != 0 && !jogador_morrendo) {
                 tempo_frame_corrida += delta;
                 if (tempo_frame_corrida >= duracao_frame_corrida) {
@@ -1032,7 +1021,6 @@ int executar_jogo_colorir(ALLEGRO_DISPLAY* display_main) {
                 tempo_frame_corrida = 0;
             }
 
-            // Animação de morte
             if (jogador_morrendo) {
                 tempo_frame_morte += delta;
                 if (tempo_frame_morte >= duracao_frame_morte) {
@@ -1045,7 +1033,6 @@ int executar_jogo_colorir(ALLEGRO_DISPLAY* display_main) {
                 }
             }
 
-            // VERIFICA SE PEGOU O BALDE
             if (!balde_pego && estado_atual < 5) {
                 int plat_index = plataforma_proximo_balde[estado_atual];
                 float balde_x = plataformas_colorir[plat_index].x + (plataformas_colorir[plat_index].largura - 50) / 2;
@@ -1059,7 +1046,6 @@ int executar_jogo_colorir(ALLEGRO_DISPLAY* display_main) {
                 }
             }
 
-            // VERIFICA SE CONCLUIU O JOGO
             if (estado_atual == 5) {
                 resultado = 1;
                 sair = true;
@@ -1087,7 +1073,6 @@ int executar_jogo_colorir(ALLEGRO_DISPLAY* display_main) {
             else {
                 al_clear_to_color(al_map_rgb(137, 137, 137));
 
-                // Desenha imagem do estado atual
                 float img_x = (LARGURA_TELA - 180) / 2;
                 float img_y = ALTURA_TELA - 100 - 180;
                 al_draw_scaled_bitmap(
@@ -1100,10 +1085,8 @@ int executar_jogo_colorir(ALLEGRO_DISPLAY* display_main) {
                     0
                 );
 
-                // Desenha chão
                 al_draw_filled_rectangle(0, ALTURA_TELA - 100, LARGURA_TELA, ALTURA_TELA, al_map_rgb(101, 67, 33));
 
-                // Desenha plataformas
                 for (int i = 0; i < NUM_PLATAFORMAS_COLORIR; i++) {
                     al_draw_filled_rectangle(
                         plataformas_colorir[i].x, plataformas_colorir[i].y,
@@ -1112,7 +1095,6 @@ int executar_jogo_colorir(ALLEGRO_DISPLAY* display_main) {
                     );
                 }
 
-                // Desenha balde se não foi pego
                 if (!balde_pego && estado_atual < 5) {
                     int plat_index = plataforma_proximo_balde[estado_atual];
                     float balde_x = plataformas_colorir[plat_index].x + (plataformas_colorir[plat_index].largura - 50) / 2;
@@ -1128,7 +1110,6 @@ int executar_jogo_colorir(ALLEGRO_DISPLAY* display_main) {
                     );
                 }
 
-                // Desenha fantasmas
                 for (int i = 0; i < num_fantasmas_colorir; i++) {
                     al_draw_scaled_bitmap(
                         img_fantasma,
@@ -1143,7 +1124,6 @@ int executar_jogo_colorir(ALLEGRO_DISPLAY* display_main) {
                     );
                 }
 
-                // Desenha jogador
                 ALLEGRO_BITMAP* sprite_jogador = NULL;
                 if (jogador_morrendo) {
                     sprite_jogador = sprites_morte[frame_morte];
@@ -1180,7 +1160,6 @@ int executar_jogo_colorir(ALLEGRO_DISPLAY* display_main) {
         }
     }
 
-    // ---------- LIMPEZA ----------
     for (int i = 0; i < MAX_ESTADOS_COLORIR; i++) {
         if (imgs_estados[i]) al_destroy_bitmap(imgs_estados[i]);
     }
@@ -1256,7 +1235,6 @@ typedef struct {
     int direcao;
 } CapangaBoss;
 
-// ESTRUTURA PARA ORGANIZAR OS DADOS DO HUD
 typedef struct {
     int vida_jogador;
     int pontuacao;
@@ -1266,7 +1244,6 @@ typedef struct {
     bool jogador_morto;
 } DadosHUD;
 
-// funcoes auxiliares
 void atualizar_fisica_entidade_boss(float* x, float* y, float* vel_y, int largura, int altura,
                                      bool* no_chao, bool ignora_plataformas, PlataformaBoss* plataformas) {
     if (!*no_chao) *vel_y += GRAVIDADE_BOSS;
@@ -1327,20 +1304,16 @@ bool colidiu_boss(float x1, float y1, int w1, int h1, float x2, float y2, int w2
     return (x1 < x2 + w2 && x1 + w1 > x2 && y1 < y2 + h2 && y1 + h1 > y2);
 }
 
-// FUNÇÃO AUXILIAR PARA DESENHAR O HUD
 void desenhar_hud(ALLEGRO_FONT* font, DadosHUD dados) {
     char buffer[100];
     ALLEGRO_COLOR cor_branca = al_map_rgb(255, 255, 255);
 
-    // 1. VIDA DO JOGADOR
     snprintf(buffer, sizeof(buffer), "VIDA: %d", dados.vida_jogador);
     al_draw_text(font, cor_branca, 20, 20, 0, buffer);
 
-    // 2. PONTUAÇÃO
     snprintf(buffer, sizeof(buffer), "PONTOS: %d", dados.pontuacao);
     al_draw_text(font, cor_branca, 20, 50, 0, buffer);
 
-    // 3. VIDA DO BOSS ou MENSAGEM DE VITÓRIA
     if (dados.boss_ativo) {
         snprintf(buffer, sizeof(buffer), "BOSS: %d/%d", dados.boss_vida_atual, dados.boss_vida_max);
         al_draw_text(font, cor_branca, LARGURA_TELA_BOSS - 150, 20,
@@ -1350,7 +1323,6 @@ void desenhar_hud(ALLEGRO_FONT* font, DadosHUD dados) {
                    ALTURA_TELA_BOSS / 2, ALLEGRO_ALIGN_CENTER, "VILAO DERROTADO!");
     }
 
-    // 4. TELA DA MORTE
     if (dados.jogador_morto) {
         al_draw_filled_rectangle(0, 0, LARGURA_TELA_BOSS, ALTURA_TELA_BOSS,
                                al_map_rgba(0, 0, 0, 180));
@@ -1365,15 +1337,11 @@ void desenhar_hud(ALLEGRO_FONT* font, DadosHUD dados) {
     }
 }
 
-
-// funcao Principal
 int executar_boss_final(ALLEGRO_DISPLAY* display_main) {
-    // inicialização
     ALLEGRO_TIMER* timer = al_create_timer(1.0 / FPS_BOSS);
     ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();
     ALLEGRO_FONT* font = al_create_builtin_font();
 
-    // carrega e toca a musica
     ALLEGRO_SAMPLE* musica_fundo = al_load_sample("assets/paranoid.wav");
     ALLEGRO_SAMPLE_INSTANCE* instancia_musica = NULL;
 
@@ -1385,16 +1353,10 @@ int executar_boss_final(ALLEGRO_DISPLAY* display_main) {
         al_play_sample_instance(instancia_musica);
     }
 
-    // imagens de fundo e das plataformas
     ALLEGRO_BITMAP* background_image = al_load_bitmap("assets/inferno.jpg");
     ALLEGRO_BITMAP* platform_block_image = al_load_bitmap("assets/floor.png");
-
-    // sprite boss e capangas
     ALLEGRO_BITMAP* boss_image = al_load_bitmap("assets/hitler.png");
     ALLEGRO_BITMAP* capanga_image = al_load_bitmap("assets/capanga.png");
-
-
-    // sprites do jogador
     ALLEGRO_BITMAP* sprite_parado = al_load_bitmap("assets/parada.png");
     ALLEGRO_BITMAP* sprites_pulo[MAX_SPRITES_PULO_BOSS];
     ALLEGRO_BITMAP* sprites_corrida[MAX_SPRITES_CORRIDA_BOSS];
@@ -1419,7 +1381,6 @@ int executar_boss_final(ALLEGRO_DISPLAY* display_main) {
     for (int i = 0; i < MAX_SPRITES_MORTE_BOSS; i++)
         sprites_morte[i] = al_load_bitmap(arquivos_morte[i]);
 
-    // cria jogador
     JogadorBoss jogador = {
         .x = 100,
         .y = ALTURA_TELA_BOSS - 125,
@@ -1433,7 +1394,6 @@ int executar_boss_final(ALLEGRO_DISPLAY* display_main) {
         .vida = 100
     };
 
-    // cria boss
     BossFinal boss = {
         .x = LARGURA_TELA_BOSS - 300,
         .y = ALTURA_TELA_BOSS - 550,
@@ -1446,13 +1406,11 @@ int executar_boss_final(ALLEGRO_DISPLAY* display_main) {
         .altura = 500
     };
 
-    // plataformas
     PlataformaBoss plataformas[MAX_PLATAFORMAS_BOSS] = {
         {50, 270, 350, 10}, {550, 545, 400, 10}, {100, 120, 400, 10}, {150, 420, 400, 10},
         {50, 545, 400, 10}, {500, 270, 400, 10}, {600, 120, 400, 10}, {650, 420, 400, 10}
     };
 
-    // arrays de tiros
     TiroBoss tiros_jogador[MAX_TIROS_JOGADOR_BOSS];
     TiroBoss tiros_boss[MAX_TIROS_BOSS_FINAL];
     TiroBoss tiros_capangas[MAX_TIROS_CAPANGA_BOSS];
@@ -1464,18 +1422,15 @@ int executar_boss_final(ALLEGRO_DISPLAY* display_main) {
     for (int i = 0; i < MAX_TIROS_CAPANGA_BOSS; i++)
         tiros_capangas[i].ativo = false;
 
-    // capangas
     CapangaBoss capangas[MAX_CAPANGAS_BOSS];
     for (int i = 0; i < MAX_CAPANGAS_BOSS; i++)
         capangas[i].ativo = false;
 
-    // variaveus de animacao
     int frame_pulo = 0, frame_corrida = 0, frame_morte = 0;
     float tempo_frame_pulo = 0, tempo_frame_corrida = 0, tempo_frame_morte = 0;
     bool jogador_morrendo = false;
     bool jogador_morto = false;
 
-    // variaveis controle do jogo
     int pontuacao = 0;
     int tempo_spawn_capanga = 0;
     bool jogo_rodando = true;
@@ -1483,13 +1438,11 @@ int executar_boss_final(ALLEGRO_DISPLAY* display_main) {
     bool redesenhar = true;
     bool reiniciar = false;
 
-    // registra eventos
     al_register_event_source(queue, al_get_display_event_source(display_main));
     al_register_event_source(queue, al_get_timer_event_source(timer));
     al_register_event_source(queue, al_get_keyboard_event_source());
     al_start_timer(timer);
 
-    // loop principal
     while (!sair) {
         ALLEGRO_EVENT evento;
         al_wait_for_event(queue, &evento);
@@ -1507,7 +1460,6 @@ int executar_boss_final(ALLEGRO_DISPLAY* display_main) {
         else if (evento.type == ALLEGRO_EVENT_TIMER && jogo_rodando) {
             float delta = 1.0f / FPS_BOSS;
 
-            // atualiza movimento Aline
             jogador.x += jogador.vel_x;
             if (jogador.x < 0) jogador.x = 0;
             if (jogador.x > LARGURA_TELA_BOSS - jogador.largura)
@@ -1517,7 +1469,6 @@ int executar_boss_final(ALLEGRO_DISPLAY* display_main) {
                                           jogador.largura, jogador.altura, &jogador.no_chao,
                                           jogador.descendo_plataforma, plataformas);
 
-            // atualiza animacoes Aline
             if (!jogador.no_chao && !jogador_morrendo) {
                 tempo_frame_pulo += delta;
                 if (tempo_frame_pulo >= 0.08f) {
@@ -1547,14 +1498,12 @@ int executar_boss_final(ALLEGRO_DISPLAY* display_main) {
                     if (frame_morte < MAX_SPRITES_MORTE_BOSS - 1) {
                         frame_morte++;
                     } else {
-                        // Animação de morte terminou
                         jogador_morto = true;
                         jogo_rodando = false;
                     }
                 }
             }
 
-            // atualiza boss
             if (boss.ativo) {
                 if (boss.vida <= boss.vida_maxima / 2)
                     boss.segunda_fase = true;
@@ -1568,21 +1517,17 @@ int executar_boss_final(ALLEGRO_DISPLAY* display_main) {
                     float jogador_centro_x = jogador.x + jogador.largura / 2;
                     float jogador_centro_y = jogador.y + jogador.altura / 2;
 
-                    // O Boss atira APENAS UMA VEZ
                     criar_tiros_direcionados_boss(tiros_boss, MAX_TIROS_BOSS_FINAL,
                                                  boss_centro_x, boss_centro_y,
                                                  jogador_centro_x, jogador_centro_y, VELOCIDADE_TIRO_BOSS_FINAL);
-
-                    // REMOVIDO: O if (boss.segunda_fase) que causava o tiro duplicado.
 
                     boss.tempo_tiro = 0;
                 }
             }
 
-            // spawn capangas
-            if (boss.ativo && boss.vida <= boss.vida_maxima * 0.75) { //aparecem quando o boss esta com 75% da vida
+            if (boss.ativo && boss.vida <= boss.vida_maxima * 0.75) {
                 tempo_spawn_capanga++;
-                if (tempo_spawn_capanga > FPS_BOSS * 3.5) { // Spawn / segundos
+                if (tempo_spawn_capanga > FPS_BOSS * 3.5) {
                     for (int i = 0; i < MAX_CAPANGAS_BOSS; i++) {
                         if (!capangas[i].ativo) {
                             capangas[i].x = (rand() % 2 == 0) ? 25.0f : LARGURA_TELA_BOSS - 50.0f;
@@ -1603,45 +1548,39 @@ int executar_boss_final(ALLEGRO_DISPLAY* display_main) {
                 }
             }
 
-            // atualiza capangas
             for (int i = 0; i < MAX_CAPANGAS_BOSS; i++) {
                 if (!capangas[i].ativo) continue;
 
                 capangas[i].vel_x = (jogador.x > capangas[i].x) ? VELOCIDADE_CAPANGA_BOSS : -VELOCIDADE_CAPANGA_BOSS;
 
-                // pulo dos capangas
                 if (capangas[i].no_chao && (rand() % (FPS_BOSS * 4) == 0)) {
                     capangas[i].vel_y = -12.0f;
                     capangas[i].no_chao = false;
                 }
 
-                // atualizar a opsicao dos capangas
                 capangas[i].x += capangas[i].vel_x;
 
-                // muda direção dos capangas
                 if (capangas[i].vel_x > 0) {
-                    capangas[i].direcao = 1;  // direita
+                    capangas[i].direcao = 1;
                 } else if (capangas[i].vel_x < 0) {
-                    capangas[i].direcao = -1;  // esquerda
+                    capangas[i].direcao = -1;
                 }
 
                 atualizar_fisica_entidade_boss(&capangas[i].x, &capangas[i].y, &capangas[i].vel_y,
                                               capangas[i].largura, capangas[i].altura,
                                               &capangas[i].no_chao, false, plataformas);
 
-                // tiro dos capangas
                 capangas[i].tempo_tiro++;
                 if (capangas[i].tempo_tiro > FPS_BOSS * 0.8) {
                     criar_tiros_direcionados_boss(tiros_capangas, MAX_TIROS_CAPANGA_BOSS,
                                                  capangas[i].x + capangas[i].largura / 2,
                                                  capangas[i].y + capangas[i].altura / 2,
                                                  jogador.x + jogador.largura / 2,
-                                                 jogador.y + jogador.altura / 2, VELOCIDADE_TIRO_CAPANGA); // USA A NOVA CONSTANTE
+                                                 jogador.y + jogador.altura / 2, VELOCIDADE_TIRO_CAPANGA);
                     capangas[i].tempo_tiro = 0;
                 }
             }
 
-            // atualiza tiros
             for (int i = 0; i < MAX_TIROS_JOGADOR_BOSS; i++) {
                 if (!tiros_jogador[i].ativo) continue;
                 tiros_jogador[i].x += tiros_jogador[i].vel_x;
@@ -1672,7 +1611,6 @@ int executar_boss_final(ALLEGRO_DISPLAY* display_main) {
                 }
             }
 
-            // verifica colisoes dos tiros da Aline
             for (int i = 0; i < MAX_TIROS_JOGADOR_BOSS; i++) {
                 if (!tiros_jogador[i].ativo) continue;
 
@@ -1703,7 +1641,6 @@ int executar_boss_final(ALLEGRO_DISPLAY* display_main) {
                 }
             }
 
-            // verifica colisoes tiros inimigos com Aline
             for (int i = 0; i < MAX_TIROS_BOSS_FINAL; i++) {
                 if (tiros_boss[i].ativo && colidiu_boss(tiros_boss[i].x, tiros_boss[i].y, 6, 6,
                                                        jogador.x, jogador.y, jogador.largura, jogador.altura)) {
@@ -1732,7 +1669,6 @@ int executar_boss_final(ALLEGRO_DISPLAY* display_main) {
                 }
             }
 
-            // verifica colisoes com boss
             if (boss.ativo && colidiu_boss(jogador.x, jogador.y, jogador.largura, jogador.altura,
                                           boss.x, boss.y, boss.largura, boss.altura)) {
                 if (!jogador_morrendo) {
@@ -1744,7 +1680,6 @@ int executar_boss_final(ALLEGRO_DISPLAY* display_main) {
                 }
             }
 
-            // se boss foi derrotado
             if (!boss.ativo) jogo_rodando = false;
 
             redesenhar = true;
@@ -1758,7 +1693,6 @@ int executar_boss_final(ALLEGRO_DISPLAY* display_main) {
             }
         }
 
-        // movimento continuo do jogador
         if (!jogador_morrendo && jogo_rodando) {
             ALLEGRO_KEYBOARD_STATE kb;
             al_get_keyboard_state(&kb);
@@ -1772,15 +1706,12 @@ int executar_boss_final(ALLEGRO_DISPLAY* display_main) {
                 jogador.no_chao = false;
             }
 
-            // descer da plataforma
             jogador.descendo_plataforma = al_key_down(&kb, ALLEGRO_KEY_S);
         }
 
-        // desenho
         if (redesenhar && al_is_event_queue_empty(queue)) {
             redesenhar = false;
 
-            // imagem do fundo
             if (background_image) {
                 al_draw_scaled_bitmap(background_image, 0, 0,
                                     al_get_bitmap_width(background_image),
@@ -1790,7 +1721,6 @@ int executar_boss_final(ALLEGRO_DISPLAY* display_main) {
                 al_clear_to_color(al_map_rgb(20, 20, 40));
             }
 
-            // desenho do chao
             float chao_y = ALTURA_TELA_BOSS - 50;
             if (platform_block_image) {
                 int num_blocos = (LARGURA_TELA_BOSS / TAMANHO_BLOCO_PLATAFORMA_BOSS) + 1;
@@ -1805,7 +1735,6 @@ int executar_boss_final(ALLEGRO_DISPLAY* display_main) {
                 al_draw_filled_rectangle(0, chao_y, LARGURA_TELA_BOSS, ALTURA_TELA_BOSS, al_map_rgb(80, 60, 30));
             }
 
-            // imagem do jogo do mario nas plataformas hihi
             for (int i = 0; i < MAX_PLATAFORMAS_BOSS; i++) {
                 if (platform_block_image) {
                     int num_blocos = (plataformas[i].largura / TAMANHO_BLOCO_PLATAFORMA_BOSS) + 1;
@@ -1825,7 +1754,6 @@ int executar_boss_final(ALLEGRO_DISPLAY* display_main) {
                 }
             }
 
-            // desenha Aline
             ALLEGRO_BITMAP* sprite_atual = NULL;
 
             if (jogador_morrendo && sprites_morte[0]) {
@@ -1853,7 +1781,6 @@ int executar_boss_final(ALLEGRO_DISPLAY* display_main) {
                 }
             }
 
-            // desenha o boss
             if (boss.ativo) {
                 if (boss_image) {
                     al_draw_scaled_bitmap(boss_image, 0, 0,
@@ -1862,7 +1789,6 @@ int executar_boss_final(ALLEGRO_DISPLAY* display_main) {
                                         boss.x, boss.y, boss.largura, boss.altura, 0);
                 }
 
-                // barra da vida do boss
                 float vida_percentual = (float)boss.vida / boss.vida_maxima;
                 al_draw_filled_rectangle(boss.x, boss.y - 15, boss.x + boss.largura,
                                        boss.y - 5, al_map_rgb(100, 0, 0));
@@ -1870,13 +1796,11 @@ int executar_boss_final(ALLEGRO_DISPLAY* display_main) {
                                        boss.y - 5, al_map_rgb(255, 0, 0));
             }
 
-            // desenha os capangas
             for (int i = 0; i < MAX_CAPANGAS_BOSS; i++) {
                 if (capangas[i].ativo) {
                     if (capanga_image) {
                         int flags = 0;
 
-                        // inversao da direcao
                         if (capangas[i].direcao == 1) {
                             flags = ALLEGRO_FLIP_HORIZONTAL;
                         }
@@ -1890,7 +1814,6 @@ int executar_boss_final(ALLEGRO_DISPLAY* display_main) {
                 }
             }
 
-            // desenha tiros do jogador
             for (int i = 0; i < MAX_TIROS_JOGADOR_BOSS; i++) {
                 if (tiros_jogador[i].ativo) {
                     al_draw_filled_circle(tiros_jogador[i].x, tiros_jogador[i].y, 2,
@@ -1898,7 +1821,6 @@ int executar_boss_final(ALLEGRO_DISPLAY* display_main) {
                 }
             }
 
-            // desenha tiros do boss
             for (int i = 0; i < MAX_TIROS_BOSS_FINAL; i++) {
                 if (tiros_boss[i].ativo) {
                     al_draw_filled_circle(tiros_boss[i].x, tiros_boss[i].y, 3,
@@ -1906,7 +1828,6 @@ int executar_boss_final(ALLEGRO_DISPLAY* display_main) {
                 }
             }
 
-            // desenha tiros dos capangas
             for (int i = 0; i < MAX_TIROS_CAPANGA_BOSS; i++) {
                 if (tiros_capangas[i].ativo) {
                     al_draw_filled_circle(tiros_capangas[i].x, tiros_capangas[i].y, 3,
@@ -1914,7 +1835,6 @@ int executar_boss_final(ALLEGRO_DISPLAY* display_main) {
                 }
             }
 
-            // COLETA DE DADOS DO HUD E CHAMADA DA FUNÇÃO AUXILIAR
             DadosHUD dados_atuais = {
                 .vida_jogador = jogador.vida,
                 .pontuacao = pontuacao,
@@ -1925,13 +1845,10 @@ int executar_boss_final(ALLEGRO_DISPLAY* display_main) {
             };
             desenhar_hud(font, dados_atuais);
 
-
             al_flip_display();
         }
     }
 
-
-    // para a música antes de limpar
     if (instancia_musica) {
         al_stop_sample_instance(instancia_musica);
         al_destroy_sample_instance(instancia_musica);
@@ -1959,14 +1876,13 @@ int executar_boss_final(ALLEGRO_DISPLAY* display_main) {
     al_destroy_timer(timer);
     al_destroy_event_queue(queue);
 
-    // se r foi pressionado, chama a funcao recursivamente
     if (reiniciar) {
         return executar_boss_final(display_main);
     }
 
     return (boss.ativo == false) ? 1 : 0;
 }
-// ----------------------- Tela de Vitória -----------------------
+
 void mostrar_tela_vitoria(ALLEGRO_DISPLAY* display) {
     ALLEGRO_FONT* font = al_create_builtin_font();
     ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();
@@ -1988,7 +1904,6 @@ void mostrar_tela_vitoria(ALLEGRO_DISPLAY* display) {
 
         al_clear_to_color(al_map_rgb(0, 0, 0));
 
-        // Efeito de texto piscante
         double tempo = al_get_time();
         int alpha = (int)((sin(tempo * 3) + 1) * 127) + 128;
 
@@ -2011,9 +1926,7 @@ void mostrar_tela_vitoria(ALLEGRO_DISPLAY* display) {
     al_destroy_event_queue(queue);
 }
 
-// ----------------------- Função para resetar o lobby -----------------------
 void resetar_lobby() {
-    // Reposiciona o jogador no centro
     jogador.x = 200;
     jogador.y = ALTURA_TELA - 250;
     jogador.vel_x = 0;
@@ -2021,19 +1934,16 @@ void resetar_lobby() {
     jogador.no_chao = true;
     jogador.direcao = 1;
 
-    // Reseta animações
     jogador.sprite_corrida = 0;
     jogador.contador_frames_corrida = 0;
     jogador.sprite_pulo = 0;
     jogador.contador_frames_pulo = 0;
 
-    // Reseta estado das portas
     for (int i = 0; i < numero_portas; i++) {
         portas[i].jogador_proximo = false;
     }
 }
 
-// ----------------------- Funções do Lobby -----------------------
 void atualizar_fisica_jogador() {
     if (!jogador.no_chao)
         jogador.vel_y += GRAVIDADE;
@@ -2129,36 +2039,39 @@ void processar_interacao_portas(ALLEGRO_DISPLAY* display) {
             if (portas[i].jogador_proximo) {
                 printf("Interagindo com a porta: %s\n", portas[i].nome);
 
-                if (i == 0) { // Quebra-cabeça
+                if (i == 0) {
                     printf("Iniciando quebra-cabeça...\n");
-                    executar_quebra_cabeca(display);
+                    int resultado = executar_quebra_cabeca(display);
                     printf("Retornando ao lobby...\n");
                     resetar_lobby();
                 }
-                else if (i == 1) { // Colorir
-                    printf("Iniciando jogo Colorir...\n");
-                    int resultado = executar_jogo_colorir(display);
-                    if (resultado == 1) {
-                        printf("Colorir concluído! Indo para Boss Final...\n");
-                        int resultado_boss = executar_boss_final(display);
-                        if (resultado_boss == 1) {
-                            printf("BOSS DERROTADO! JOGO CONCLUÍDO!\n");
-                            // AQUI VAMOS MOSTRAR A TELA FINAL
-                            mostrar_tela_vitoria(display);
+                else if (i == 1) {
+                    if (!chave_quebra_cabeca || !chave_memoria) {
+                        printf("Porta trancada! Faltam chaves.\n");
+                    } else {
+                        printf("Iniciando jogo Colorir...\n");
+                        int resultado = executar_jogo_colorir(display);
+                        if (resultado == 1) {
+                            printf("Colorir concluído! Indo para Boss Final...\n");
+                            int resultado_boss = executar_boss_final(display);
+                            if (resultado_boss == 1) {
+                                printf("BOSS DERROTADO! JOGO CONCLUÍDO!\n");
+                                mostrar_tela_vitoria(display);
+                            }
+                            else {
+                                printf("Retornando ao lobby...\n");
+                                resetar_lobby();
+                            }
                         }
                         else {
                             printf("Retornando ao lobby...\n");
                             resetar_lobby();
                         }
                     }
-                    else {
-                        printf("Retornando ao lobby...\n");
-                        resetar_lobby();
-                    }
                 }
-                else if (i == 2) { // Jogo da Memória
+                else if (i == 2) {
                     printf("Iniciando jogo da memória...\n");
-                    executar_jogo_memoria(display);
+                    int resultado = executar_jogo_memoria(display);
                     printf("Retornando ao lobby...\n");
                     resetar_lobby();
                 }
@@ -2169,12 +2082,13 @@ void processar_interacao_portas(ALLEGRO_DISPLAY* display) {
 }
 
 void inicializar_portas() {
-    // Porta 1 - Esquerda (Quebra-cabeça)
     portas[0].x = 150;
     portas[0].y = ALTURA_TELA - 250;
+    portas[0].largura = 80;
+    portas[0].altura = 150;
+    portas[0].jogador_proximo = false;
     snprintf(portas[0].nome, sizeof(portas[0].nome), "Quebra-Cabeça");
 
-    // Porta 2 - Centro (Colorir)
     portas[1].x = LARGURA_TELA / 2 - 40;
     portas[1].y = ALTURA_TELA - 250;
     portas[1].largura = 80;
@@ -2182,9 +2096,11 @@ void inicializar_portas() {
     portas[1].jogador_proximo = false;
     snprintf(portas[1].nome, sizeof(portas[1].nome), "Colorir");
 
-    // Porta 3 - Direita (Jogo da Memória)
     portas[2].x = LARGURA_TELA - 230;
     portas[2].y = ALTURA_TELA - 250;
+    portas[2].largura = 80;
+    portas[2].altura = 150;
+    portas[2].jogador_proximo = false;
     snprintf(portas[2].nome, sizeof(portas[2].nome), "Jogo da Memória");
 }
 
@@ -2229,7 +2145,6 @@ bool carregar_sprites_lobby() {
     return true;
 }
 
-// ----------------------- Função principal -----------------------
 int main(void) {
     if (!al_init()) {
         fprintf(stderr, "Falha ao inicializar Allegro!\n");
@@ -2240,15 +2155,8 @@ int main(void) {
     al_install_keyboard();
     al_install_mouse();
     al_init_native_dialog_addon();
-
-
-    al_init_font_addon(); //
-    al_init_ttf_addon(); //
-    al_init_image_addon();
-    al_init_primitives_addon();
-    al_install_keyboard();
-    al_install_mouse();
-    al_init_native_dialog_addon();
+    al_init_font_addon();
+    al_init_ttf_addon();
 
     if (!al_install_audio()) {
         fprintf(stderr, "Falha ao inicializar áudio!\n");
@@ -2258,7 +2166,6 @@ int main(void) {
         fprintf(stderr, "Falha ao inicializar acodec!\n");
         return -1;
     }
-    // Reserve mais samples! 1 é muito pouco.
     if (!al_reserve_samples(16)) {
         fprintf(stderr, "Falha ao reservar samples!\n");
         return -1;
@@ -2274,7 +2181,7 @@ int main(void) {
     ALLEGRO_BITMAP* instrucoes = al_load_bitmap("assets/instrucoesmdj.jpg");
     if (!background || !instrucoes) {
         al_show_native_message_box(display, "Erro", "Falha ao carregar imagem.",
-            "Verifique se os arquivos 'background.jpg' e 'instrucoes.jpg' existem na pasta assets.",
+            "Verifique se os arquivos 'background.jpg' e 'instrucoesmdj.jpg' existem na pasta assets.",
             NULL, ALLEGRO_MESSAGEBOX_ERROR);
         al_destroy_display(display);
         return -1;
@@ -2389,13 +2296,62 @@ int main(void) {
                     0, 0,
                     LARGURA_TELA, ALTURA_TELA, 0);
 
-                // Desenha texto de interação apenas quando jogador está próximo
                 for (int i = 0; i < numero_portas; i++) {
                     if (portas[i].jogador_proximo && font) {
                         al_draw_text(font, al_map_rgb(255, 255, 255),
                             portas[i].x + portas[i].largura / 2,
                             portas[i].y - 30,
                             ALLEGRO_ALIGN_CENTER, "Pressione E");
+                    }
+                }
+
+                if (font) {
+                    char buffer[100];
+                    int y_pos = 20;
+
+                    al_draw_text(font, al_map_rgb(255, 255, 255), 20, y_pos, 0, "CHAVES COLETADAS:");
+                    y_pos += 30;
+
+                    if (chave_quebra_cabeca) {
+                        al_draw_text(font, al_map_rgb(255, 215, 0), 20, y_pos, 0, "🔑 Quebra-Cabeça");
+                    } else {
+                        al_draw_text(font, al_map_rgb(100, 100, 100), 20, y_pos, 0, "🔒 Quebra-Cabeça");
+                    }
+                    y_pos += 30;
+
+                    if (chave_memoria) {
+                        al_draw_text(font, al_map_rgb(255, 215, 0), 20, y_pos, 0, "🔑 Memória");
+                    } else {
+                        al_draw_text(font, al_map_rgb(100, 100, 100), 20, y_pos, 0, "🔒 Memória");
+                    }
+                }
+
+                for (int i = 0; i < numero_portas; i++) {
+                    if (i == 1 && portas[i].jogador_proximo && font) {
+                        if (!chave_quebra_cabeca || !chave_memoria) {
+                            al_draw_filled_rectangle(
+                                portas[i].x - 100, portas[i].y - 80,
+                                portas[i].x + portas[i].largura + 100, portas[i].y - 40,
+                                al_map_rgba(0, 0, 0, 180)
+                            );
+                            al_draw_text(font, al_map_rgb(255, 50, 50),
+                                portas[i].x + portas[i].largura / 2,
+                                portas[i].y - 65,
+                                ALLEGRO_ALIGN_CENTER, "🔒 PORTA TRANCADA!");
+
+                            char msg[100];
+                            snprintf(msg, sizeof(msg), "Faltam %d chave(s)",
+                                     2 - (chave_quebra_cabeca ? 1 : 0) - (chave_memoria ? 1 : 0));
+                            al_draw_text(font, al_map_rgb(255, 255, 255),
+                                portas[i].x + portas[i].largura / 2,
+                                portas[i].y - 45,
+                                ALLEGRO_ALIGN_CENTER, msg);
+                        } else {
+                            al_draw_text(font, al_map_rgb(0, 255, 0),
+                                portas[i].x + portas[i].largura / 2,
+                                portas[i].y - 50,
+                                ALLEGRO_ALIGN_CENTER, "✓ DESBLOQUEADA");
+                        }
                     }
                 }
 
@@ -2437,7 +2393,6 @@ int main(void) {
     al_destroy_bitmap(background);
     al_destroy_bitmap(instrucoes);
 
-    // Libera sprites do lobby
     if (sprite_parado) al_destroy_bitmap(sprite_parado);
     if (fundo) al_destroy_bitmap(fundo);
     for (int i = 0; i < NUM_SPRITES; i++) {
