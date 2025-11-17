@@ -427,7 +427,6 @@ void embaralhar_memoria(int* v, int n) {
     }
 }
 
-// ----------------------- Função do Jogo da Memória (CORRIGIDA) -----------------------
 int executar_jogo_memoria(ALLEGRO_DISPLAY* display_main) {
     srand((unsigned)time(NULL));
 
@@ -448,23 +447,24 @@ int executar_jogo_memoria(ALLEGRO_DISPLAY* display_main) {
     if (!background_memoria) {
         fprintf(stderr, "Erro ao carregar imagem de fundo do jogo da memória\n");
         al_show_native_message_box(display, "Erro", "Arquivo não encontrado",
-            "Verifique se assets/background.jpg existe", NULL, ALLEGRO_MESSAGEBOX_ERROR);
+            "Verifique se assets/backgroundjdm.jpg existe", NULL, ALLEGRO_MESSAGEBOX_ERROR);
         al_destroy_display(display);
         return 0;
     }
 
-    const char* nomes_imagens[7] = {
+    const char* nomes_imagens[8] = {
         "assets/img1.jpg",
         "assets/img2.jpg",
         "assets/img3.jpg",
         "assets/jc.jpg",
         "assets/pintinho.jpg",
         "assets/img5.jpg",
-        "assets/img6.jpg"
+        "assets/img6.jpg",
+        "assets/img7.jpg"
     };
 
     // Verifica se as imagens das cartas existem
-    for (int i = 0; i < 7; i++) {
+    for (int i = 0; i < 8; i++) {
         ALLEGRO_BITMAP* test = al_load_bitmap(nomes_imagens[i]);
         if (!test) {
             char err_msg[256];
@@ -481,16 +481,10 @@ int executar_jogo_memoria(ALLEGRO_DISPLAY* display_main) {
     int total_cartas = LINHAS_MEMORIA * COLUNAS_MEMORIA;
     int ids[LINHAS_MEMORIA * COLUNAS_MEMORIA];
 
-    // Preenche os IDs dos pares
+    // Preenche os IDs dos pares (agora com 8 imagens únicas, sem duplicação)
     for (int i = 0; i < total_cartas / 2; i++) {
-        if (i < 7)
-            ids[2 * i] = i;
-        else
-            ids[2 * i] = 6;
-        if (i < 7)
-            ids[2 * i + 1] = i;
-        else
-            ids[2 * i + 1] = 6;
+        ids[2 * i] = i;
+        ids[2 * i + 1] = i;
     }
     embaralhar_memoria(ids, total_cartas);
 
@@ -503,7 +497,6 @@ int executar_jogo_memoria(ALLEGRO_DISPLAY* display_main) {
             cartas[i][j].encontrada = 0;
 
             int img_index = cartas[i][j].id;
-            if (img_index > 6) img_index = 6;
             cartas[i][j].imagem = al_load_bitmap(nomes_imagens[img_index]);
             if (!cartas[i][j].imagem) {
                 fprintf(stderr, "Erro ao carregar imagem %s\n", nomes_imagens[img_index]);
@@ -518,6 +511,7 @@ int executar_jogo_memoria(ALLEGRO_DISPLAY* display_main) {
     Carta* primeira = NULL;
     Carta* segunda = NULL;
     double tempo_virada = 0;
+    double tempo_vitoria = 0;
     int pares_encontrados = 0;
     int rodando = 1;
 
@@ -618,28 +612,22 @@ int executar_jogo_memoria(ALLEGRO_DISPLAY* display_main) {
             SCREEN_W / 2, SCREEN_H - 60, ALLEGRO_ALIGN_CENTER,
             "Pares encontrados: %d / %d", pares_encontrados, total_cartas / 2);
 
-        // No jogo da memória, substitua toda a parte de vitória por isso:
+        // Verifica vitória
         if (pares_encontrados == total_cartas / 2) {
             al_draw_text(font, al_map_rgb(255, 255, 0), SCREEN_W / 2, SCREEN_H - 30,
-                ALLEGRO_ALIGN_CENTER, "🎉 Você venceu! Voltando ao lobby...");
+                ALLEGRO_ALIGN_CENTER, "Você venceu! Voltando ao lobby...");
 
             // Espera 3 segundos e volta automaticamente
-            static double tempo_vitoria = 0;
             if (tempo_vitoria == 0) {
                 tempo_vitoria = al_get_time();
             }
             if (al_get_time() - tempo_vitoria > 3.0) {
-                rodando = 0; // Volta automaticamente após 3 segundos
+                rodando = 0;
             }
         }
         else {
             al_draw_text(font, al_map_rgb(255, 255, 255), SCREEN_W / 2, 20,
                 ALLEGRO_ALIGN_CENTER, "Jogo da Memória - Pressione ESC para voltar");
-        }
-
-        // E mantenha apenas a verificação do ESC para sair durante o jogo:
-        if (ev.type == ALLEGRO_EVENT_KEY_DOWN && ev.keyboard.keycode == ALLEGRO_KEY_ESCAPE) {
-            rodando = 0;
         }
 
         al_flip_display();
@@ -661,7 +649,6 @@ int executar_jogo_memoria(ALLEGRO_DISPLAY* display_main) {
 
     return 1;
 }
-
 // ----------------------- Estruturas e funções do Jogo Colorir -----------------------
 #define NUM_PLATAFORMAS_COLORIR 16
 #define MAX_ESTADOS_COLORIR 6
@@ -763,7 +750,7 @@ void processar_entrada_movimento_colorir(JogadorColorir* jogador, bool* jogador_
 
     jogador->abaixado = al_key_down(&kb, ALLEGRO_KEY_S);
 
-    if (al_key_down(&kb, ALLEGRO_KEY_E)) {
+    if (al_key_down(&kb, ALLEGRO_KEY_SPACE)) {
         float img_x = (LARGURA_TELA - 180) / 2;
         float img_y = ALTURA_TELA - 100 - 180;
         if (jogador->x + jogador->largura > img_x && jogador->x < img_x + 180 &&
@@ -992,7 +979,7 @@ int executar_jogo_colorir(ALLEGRO_DISPLAY* display_main) {
         else if (evento.type == ALLEGRO_EVENT_KEY_DOWN && evento.keyboard.keycode == ALLEGRO_KEY_ESCAPE) {
             sair = true;
         }
-        else if (evento.type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN && cena_instrucoes) {
+        else if (evento.type == ALLEGRO_EVENT_KEY_DOWN && evento.keyboard.keycode == ALLEGRO_KEY_ENTER && cena_instrucoes) {
             cena_instrucoes = false;
         }
         else if (evento.type == ALLEGRO_EVENT_TIMER && !cena_instrucoes) {
@@ -1217,7 +1204,6 @@ int executar_jogo_colorir(ALLEGRO_DISPLAY* display_main) {
 
     return resultado;
 }
-
 // ----------------------- Estruturas e funções do Boss Final -----------------------
 #define LARGURA_TELA_BOSS SCREEN_W
 #define ALTURA_TELA_BOSS SCREEN_H
