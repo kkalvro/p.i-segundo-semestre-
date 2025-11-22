@@ -85,7 +85,8 @@ static void shuffle_positions_outside(Piece* pieces, int total, int piece_w_s, i
     }
 }
 
-// ----------------------- Função do Quebra-Cabeça (CORRIGIDA) -----------------------
+// ----------------------- Função do Quebra-Cabeça (COM ATALHO DE DEBUG) -----------------------
+
 int executar_quebra_cabeca(ALLEGRO_DISPLAY* display_main) {
     srand((unsigned)time(NULL));
 
@@ -400,7 +401,6 @@ int executar_quebra_cabeca(ALLEGRO_DISPLAY* display_main) {
 
     return todas_fases_concluidas ? 1 : 0;
 }
-
 // ----------------------- Estruturas e funções do Jogo da Memória -----------------------
 #define LINHAS_MEMORIA 4
 #define COLUNAS_MEMORIA 4
