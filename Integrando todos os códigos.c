@@ -263,6 +263,20 @@ int executar_quebra_cabeca(ALLEGRO_DISPLAY* display_main) {
                     break;
                 }
 
+
+                // ============= CÓDIGO PARA PULAR A FASE NO "SPACE"===================================================================
+                else if (ev.type == ALLEGRO_EVENT_KEY_DOWN && ev.keyboard.keycode == ALLEGRO_KEY_SPACE && !victory_flag) {
+                    for (int i = 0; i < total; i++) {
+                        pieces[i].placed = 1;
+                        pieces[i].x = pieces[i].target_x;
+                        pieces[i].y = pieces[i].target_y;
+                    }
+                    victory_flag = 1;
+                }
+                // ============= CÓDIGO PARA PULAR A FASE NO "SPACE"===================================================================
+
+
+
                 else if (ev.type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN && !victory_flag) {
                     float mx = ev.mouse.x, my = ev.mouse.y;
                     for (int i = total - 1; i >= 0; i--) {
