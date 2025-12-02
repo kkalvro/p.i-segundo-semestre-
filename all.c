@@ -1546,7 +1546,6 @@ typedef struct {
 
 typedef struct {
     int vida_jogador;
-    int pontuacao;
     int boss_vida_atual;
     int boss_vida_max;
     bool boss_ativo;
@@ -1619,9 +1618,6 @@ void desenhar_hud(ALLEGRO_FONT* font, DadosHUD dados) {
 
     snprintf(buffer, sizeof(buffer), "VIDA: %d", dados.vida_jogador);
     al_draw_text(font, cor_branca, 20, 20, 0, buffer);
-
-    snprintf(buffer, sizeof(buffer), "PONTOS: %d", dados.pontuacao);
-    al_draw_text(font, cor_branca, 20, 50, 0, buffer);
 
     if (dados.boss_ativo) {
         snprintf(buffer, sizeof(buffer), "BOSS: %d/%d", dados.boss_vida_atual, dados.boss_vida_max);
@@ -1741,7 +1737,6 @@ int executar_boss_final(ALLEGRO_DISPLAY* display_main) {
     bool jogador_morrendo = false;
     bool jogador_morto = false;
 
-    int pontuacao = 0;
     int tempo_spawn_capanga = 0;
     bool jogo_rodando = true;
     bool sair = false;
@@ -1932,10 +1927,8 @@ int executar_boss_final(ALLEGRO_DISPLAY* display_main) {
                     boss.x, boss.y, boss.largura, boss.altura)) {
                     tiros_jogador[i].ativo = false;
                     boss.vida -= 2;
-                    pontuacao += 10;
                     if (boss.vida <= 0) {
                         boss.ativo = false;
-                        pontuacao += 1000;
                     }
                 }
 
@@ -1945,10 +1938,8 @@ int executar_boss_final(ALLEGRO_DISPLAY* display_main) {
                         capangas[j].largura, capangas[j].altura)) {
                         tiros_jogador[i].ativo = false;
                         capangas[j].vida -= 20;
-                        pontuacao += 5;
                         if (capangas[j].vida <= 0) {
                             capangas[j].ativo = false;
-                            pontuacao += 50;
                         }
                         break;
                     }
@@ -2158,7 +2149,6 @@ int executar_boss_final(ALLEGRO_DISPLAY* display_main) {
 
             DadosHUD dados_atuais = {
                 .vida_jogador = jogador.vida,
-                .pontuacao = pontuacao,
                 .boss_vida_atual = boss.vida,
                 .boss_vida_max = boss.vida_maxima,
                 .boss_ativo = boss.ativo,
