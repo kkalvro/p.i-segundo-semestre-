@@ -18,7 +18,7 @@ Que tal embarcar nesta jornada educativa e descobrir o quanto você realmente sa
 
 - 🎮 Entreter e divertir o jogador com uma jogabilidade desafiadora e uma história dopáminergica
 - 🎨 Explicar de modo divertido sobre artes, artistas, movimentos e técnicas de forma lúdica
-- 🌍 Promover a ideia de que a arte não é exclusiva para algunss e quebra barreiras de tempo e espaço com figuras históricas
+- 🌍 Promover a ideia de que a arte não é exclusiva para alguns e quebra barreiras de tempo e espaço com figuras históricas
 
 ## 👥 Equipe
 
